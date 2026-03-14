@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -22,24 +21,44 @@ import {
   Settings,
   Bell,
   LogOut,
-  User,
+  User as UserIcon,
   Plus,
   Search,
-  Sparkles
+  Sparkles,
+  ShoppingBag,
+  Briefcase,
+  TrendingUp
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
+import { useUser, UserRole } from "@/hooks/api/use-user"
 
-const navItems = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/my-properties", label: "Properties", icon: Building2 },
-  { href: "/dashboard/favorites", label: "Favorites", icon: Heart },
-  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
-]
+const navItemsByRole: Record<UserRole, any[]> = {
+  buyer: [
+    { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+    { href: "/dashboard/favorites", label: "Favorites", icon: Heart },
+    { href: "/dashboard/purchases", label: "My Library", icon: ShoppingBag },
+    { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
+  ],
+  owner: [
+    { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+    { href: "/dashboard/my-properties", label: "My Properties", icon: Building2 },
+    { href: "/dashboard/analytics", label: "Analytics", icon: TrendingUp },
+    { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
+  ],
+  professional: [
+    { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+    { href: "/dashboard/portfolio", label: "My Portfolio", icon: Briefcase },
+    { href: "/dashboard/bookings", label: "Project Leads", icon: Sparkles },
+    { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
+  ]
+}
 
 export function DashboardNav() {
   const pathname = usePathname()
+  const { data: user, isLoading } = useUser()
+  const role = user?.role || "buyer"
+  const navItems = navItemsByRole[role]
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-white/5 backdrop-blur-xl transition-all duration-300">
@@ -50,9 +69,14 @@ export function DashboardNav() {
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent shadow-lg transition-transform group-hover:scale-110">
               <Compass className="h-6 w-6 text-white" />
             </div>
-            <span className="font-serif text-2xl tracking-tight text-foreground font-bold hidden sm:block">
-              Terra<span className="text-primary">Vision</span>
-            </span>
+            <div className="flex flex-col">
+              <span className="font-serif text-xl tracking-tight text-foreground font-bold hidden sm:block leading-none">
+                Terra<span className="text-primary">Vision</span>
+              </span>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest hidden sm:block mt-1">
+                {role} Console
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Nav - Pill Style */}
@@ -91,10 +115,14 @@ export function DashboardNav() {
             />
           </div>
 
-          <Button size="sm" variant="glossy" className="hidden gap-2 sm:flex rounded-xl font-bold px-5 h-11">
-            <Plus className="h-4 w-4" />
-            Post Property
-          </Button>
+          {role === "owner" && (
+            <Button size="sm" variant="glossy" asChild className="hidden gap-2 sm:flex rounded-xl font-bold px-5 h-11">
+              <Link href="/dashboard/my-properties/new">
+                <Plus className="h-4 w-4" />
+                Post Property
+              </Link>
+            </Button>
+          )}
 
           <Button variant="ghost" size="icon" className="relative h-11 w-11 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10">
             <Bell className="h-5 w-5" />
@@ -105,7 +133,9 @@ export function DashboardNav() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-11 w-11 rounded-xl border border-white/20 p-0 shadow-lg hover:bg-white/10 transition-all">
                 <Avatar className="h-full w-full rounded-xl">
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white font-bold">JD</AvatarFallback>
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white font-bold">
+                    {user?.full_name?.split(" ").map(n => n[0]).join("") || "JD"}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -113,30 +143,26 @@ export function DashboardNav() {
               <DropdownMenuLabel className="p-4">
                 <div className="flex flex-col space-y-1">
                   <div className="flex items-center gap-2">
-                    <p className="text-base font-bold">John Doe</p>
-                    <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] uppercase font-bold px-2 py-0">Pro</Badge>
+                    <p className="text-base font-bold">{user?.full_name || "John Doe"}</p>
+                    <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] uppercase font-bold px-2 py-0">
+                      {role === "professional" ? "Expert" : role}
+                    </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground font-medium">john.doe@terravision.com</p>
+                  <p className="text-xs text-muted-foreground font-medium">{user?.email}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-white/10 mx-2" />
               <div className="p-1 space-y-1">
-                <DropdownMenuItem asChild className="rounded-xl p-3 focus:bg-primary/20 focus:text-primary transition-colors cursor-pointer">
+                <DropdownMenuItem asChild className="rounded-xl p-3 focus:bg-primary/20 focus:text-primary transition-colors cursor-pointer font-bold">
                   <Link href="/dashboard" className="flex items-center gap-3 font-bold">
                     <LayoutDashboard className="h-4 w-4" />
                     Dashboard
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="rounded-xl p-3 focus:bg-primary/20 focus:text-primary transition-colors cursor-pointer">
+                <DropdownMenuItem asChild className="rounded-xl p-3 focus:bg-primary/20 focus:text-primary transition-colors cursor-pointer font-bold">
                   <Link href="/dashboard/settings" className="flex items-center gap-3 font-bold">
-                    <User className="h-4 w-4" />
-                    My Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild className="rounded-xl p-3 focus:bg-primary/20 focus:text-primary transition-colors cursor-pointer">
-                  <Link href="/dashboard/settings" className="flex items-center gap-3 font-bold">
-                    <Settings className="h-4 w-4" />
-                    Settings
+                    <UserIcon className="h-4 w-4" />
+                    Account Settings
                   </Link>
                 </DropdownMenuItem>
               </div>
@@ -152,7 +178,7 @@ export function DashboardNav() {
 
       {/* Mobile Nav - Glossy Scrollable */}
       <nav className="flex items-center gap-2 overflow-x-auto border-t border-white/10 px-4 py-3 lg:hidden no-scrollbar">
-        {navItems.map((item) => {
+        {navItems?.map((item) => {
           const isActive = pathname === item.href || 
             (item.href !== "/dashboard" && pathname.startsWith(item.href))
           return (

@@ -10,18 +10,28 @@ type RequestOptions = {
   isMultipart?: boolean;
 };
 
-// Simple in-memory mock store for favorites during session
+// Simple in-memory mock store
 let mockFavorites: string[] = ["prop-1", "prop-3"];
+let currentMockRole: "buyer" | "owner" | "professional" = "owner"; // Default for dev
 
 async function mockRequest(path: string, options: RequestOptions = {}) {
   console.log(`[MOCK API] ${options.method || 'GET'} ${path}`, options.body);
   
   await new Promise(resolve => setTimeout(resolve, 500));
 
-  // Auth Mocks
-  if (path === '/auth/login') return { access_token: 'mock-jwt-token', token_type: 'bearer' };
-  if (path === '/auth/register') return { id: 1, email: options.body?.email, full_name: options.body?.full_name, role: options.body?.role };
+  // User Mocks
+  if (path === '/users/me') {
+    return {
+      id: 1,
+      email: "john.doe@terravision.com",
+      full_name: "John Doe",
+      role: currentMockRole,
+      is_active: true
+    };
+  }
 
+  if (path === '/auth/login') return { access_token: 'mock-jwt-token', token_type: 'bearer' };
+  
   // Favorites Mocks
   if (path === '/favorites' || path === '/favorites/') {
     if (options.method === 'POST') {
@@ -29,7 +39,6 @@ async function mockRequest(path: string, options: RequestOptions = {}) {
       if (id && !mockFavorites.includes(id)) mockFavorites.push(id);
       return { status: 'success' };
     }
-    // Return full property objects for favorites
     return properties.filter(p => mockFavorites.includes(p.id)).map(p => ({
       id: parseInt(p.id.split('-')[1]) || Math.floor(Math.random() * 1000),
       property_id: p.id,
@@ -40,76 +49,57 @@ async function mockRequest(path: string, options: RequestOptions = {}) {
     }));
   }
 
-  if (path.startsWith('/favorites/')) {
-    const id = path.split('/')[2];
-    mockFavorites = mockFavorites.filter(favId => favId !== id && !favId.endsWith(id));
-    return { status: 'deleted' };
-  }
-
-  // Properties Mocks
-  if (path === '/properties/' || path === '/properties') {
-    return properties.map(p => ({
-      id: parseInt(p.id.split('-')[1]) || Math.floor(Math.random() * 1000),
-      owner_id: 1,
-      title: p.title,
-      description: p.description,
-      location: p.location,
-      price: p.price,
-      land_size: p.size,
-      image_url: p.images[0],
-      is_model_generated: p.has3D,
-      model_3d_url: p.model3DUrl,
-      created_at: p.createdAt,
-      images: p.images.map((url, i) => ({ id: i, url, image_type: 'other' }))
-    }));
-  }
-
-  if (path.startsWith('/properties/')) {
-    const id = path.split('/')[2];
-    const p = properties.find(prop => prop.id === `prop-${id}` || prop.id === id) || properties[0];
+  // Analytics Mocks
+  if (path === '/analytics/overview') {
+    if (currentMockRole === 'owner') {
+      return {
+        stats: [
+          { label: "Property Views", value: "1,284", change: "+12%", trend: "up" },
+          { label: "Active Inquiries", value: "14", change: "+3", trend: "up" },
+          { label: "Avg. Time to 3D", value: "42s", change: "-5s", trend: "up" },
+          { label: "Total Revenue", value: "$450k", change: "+$120k", trend: "up" }
+        ],
+        chartData: [
+          { name: "Mon", value: 400 }, { name: "Tue", value: 300 }, { name: "Wed", value: 600 },
+          { name: "Thu", value: 800 }, { name: "Fri", value: 500 }, { name: "Sat", value: 900 }, { name: "Sun", value: 1000 }
+        ]
+      };
+    }
+    if (currentMockRole === 'professional') {
+      return {
+        stats: [
+          { label: "Profile Reach", value: "856", change: "+18%", trend: "up" },
+          { label: "New Bookings", value: "5", change: "+2", trend: "up" },
+          { label: "Active Projects", value: "3", change: "Stable", trend: "neutral" },
+          { label: "Total Earned", value: "$12.5k", change: "+$2.1k", trend: "up" }
+        ]
+      };
+    }
     return {
-      id: parseInt(id) || 1,
-      owner_id: 1,
-      title: p.title,
-      description: p.description,
-      location: p.location,
-      price: p.price,
-      land_size: p.size,
-      image_url: p.images[0],
-      is_model_generated: p.has3D,
-      model_3d_url: p.model3DUrl,
-      created_at: p.createdAt,
-      images: p.images.map((url, i) => ({ id: i, url, image_type: 'other' }))
+      stats: [
+        { label: "Properties Saved", value: "12", change: "+2", trend: "up" },
+        { label: "Architects Hired", value: "1", change: "New", trend: "up" },
+        { label: "Floor Plans", value: "3", change: "+1", trend: "up" },
+        { label: "Virtual Tours", value: "45", change: "+12", trend: "up" }
+      ]
     };
   }
 
-  // Professionals Mocks
-  if (path === '/professionals/' || path === '/professionals') {
-    return professionals.map(p => ({
+  // Rest of mocks... (Properties, Professionals, Messages)
+  if (path === '/properties/' || path === '/properties') {
+    return properties.map(p => ({
       id: parseInt(p.id.split('-')[1]) || Math.floor(Math.random() * 1000),
-      user_id: 1,
-      profession: p.profession,
-      bio: p.bio,
-      portfolio_url: p.portfolioUrl,
-      hourly_rate: p.hourlyRate,
-      user: { id: 1, email: p.email, full_name: p.name, role: 'professional', is_active: true }
+      owner_id: 1, title: p.title, description: p.description, location: p.location, price: p.price,
+      land_size: p.size, image_url: p.images[0], is_model_generated: p.has3D,
+      model_3d_url: p.model3DUrl, created_at: p.createdAt,
+      images: p.images.map((url, i) => ({ id: i, url, image_type: 'other' }))
     }));
   }
 
-  // Messaging Mocks
   if (path === '/messages/conversations') {
     return [
       { id: 1, name: "Sarah Chen", role: "Architect", avatar: "SC", lastMessage: "I'd love to discuss the floor plan...", time: "2m ago", unread: 2 },
       { id: 2, name: "Michael Torres", role: "Contractor", avatar: "MT", lastMessage: "The quote is ready.", time: "1h ago", unread: 0 },
-      { id: 3, name: "Emily Watson", role: "Designer", avatar: "EW", lastMessage: "Great! I'll send concepts.", time: "3h ago", unread: 1 },
-    ];
-  }
-
-  if (path.startsWith('/messages/conversations/') && path.endsWith('/messages')) {
-    return [
-      { id: 1, sender: "Sarah Chen", content: "Hi! I saw your Hillside Estate property listing. It looks amazing!", time: "10:30 AM", isOwn: false },
-      { id: 2, sender: "You", content: "Thank you! Yes, it has great potential.", time: "10:32 AM", isOwn: true },
-      { id: 3, sender: "Sarah Chen", content: "I'd love to discuss the floor plan for your property.", time: "10:40 AM", isOwn: false },
     ];
   }
 
@@ -118,18 +108,15 @@ async function mockRequest(path: string, options: RequestOptions = {}) {
 
 async function request(path: string, options: RequestOptions = {}) {
   if (IS_MOCK) return mockRequest(path, options);
-
   const url = `${BASE_URL}${path}`;
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const headers: Record<string, string> = { ...options.headers };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-
   let body = options.body;
   if (body && !options.isMultipart) {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(body);
   }
-
   const response = await fetch(url, { method: options.method || 'GET', headers, body });
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ detail: 'An error occurred' }));
