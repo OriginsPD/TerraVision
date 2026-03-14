@@ -4,15 +4,27 @@ import { User } from "@/hooks/api/use-user"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Briefcase, Sparkles, Star, Users, MessageSquare, TrendingUp, ArrowRight, Clock, Award, Zap, LayoutGrid, CheckCircle2 } from "lucide-react"
+import { Briefcase, Sparkles, Star, Users, MessageSquare, TrendingUp, ArrowRight, Clock, Award, Zap, LayoutGrid, CheckCircle2, TrendingDown, Minus } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { useAnalytics } from "@/hooks/api/use-analytics"
+import { cn } from "@/lib/utils"
 
 export function ExpertOverview({ user }: { user: User }) {
+  const { data: analytics, isLoading } = useAnalytics()
+  
   const recentLeads = [
     { name: "John Smith", project: "Eco-Home Design", budget: "$5k - $10k", time: "2h ago", status: "New" },
     { name: "Alice Brown", project: "Terrain Analysis", budget: "$2k - $4k", time: "5h ago", status: "Pending" },
   ]
+
+  const iconMap: Record<string, any> = {
+    "Profile Reach": Users,
+    "New Bookings": Sparkles,
+    "Avg. Rating": Star,
+    "Total Earned": Zap,
+    "Active Projects": Briefcase
+  }
 
   return (
     <div className="p-6 lg:p-10 space-y-10">
@@ -34,24 +46,36 @@ export function ExpertOverview({ user }: { user: User }) {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: "Profile Reach", value: "856", icon: Users, color: "text-primary", bg: "bg-primary/10" },
-          { label: "New Bookings", value: "5", icon: Sparkles, color: "text-accent", bg: "bg-accent/10" },
-          { label: "Avg. Rating", value: "4.9", icon: Star, color: "text-primary", bg: "bg-primary/10" },
-          { label: "Total Earned", value: "$12.5k", icon: Zap, color: "text-accent", bg: "bg-accent/10" },
-        ].map((stat, i) => (
-          <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-            <Card className="glass border-white/10 hover:border-white/30 transition-all hover:shadow-2xl group overflow-hidden rounded-[2rem]">
-              <CardContent className="p-8">
-                <div className={cn("flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg mb-6 group-hover:scale-110 transition-transform", stat.bg)}>
-                  <stat.icon className={cn("h-7 w-7", stat.color)} />
-                </div>
-                <p className="font-serif text-4xl font-bold text-foreground mb-1">{stat.value}</p>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-40 rounded-[2rem] bg-white/5 animate-pulse" />
+          ))
+        ) : (
+          analytics?.stats.map((stat, i) => {
+            const Icon = iconMap[stat.label] || Award
+            return (
+              <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+                <Card className="glass border-white/10 hover:border-white/30 transition-all hover:shadow-2xl group overflow-hidden rounded-[2rem]">
+                  <CardContent className="p-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className={cn("flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg group-hover:scale-110 transition-transform", i % 2 === 0 ? "bg-primary/10" : "bg-accent/10")}>
+                        <Icon className={cn("h-7 w-7", i % 2 === 0 ? "text-primary" : "text-accent")} />
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <div className={cn("flex items-center gap-1 font-bold text-xs", stat.trend === 'up' ? "text-emerald-500" : "text-muted-foreground")}>
+                          {stat.trend === 'up' ? <TrendingUp className="h-3 w-3" /> : stat.trend === 'down' ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                          <span>{stat.change}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="font-serif text-4xl font-bold text-foreground mb-1">{stat.value}</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )
+          })
+        )}
       </div>
 
       <div className="grid gap-10 lg:grid-cols-3">
@@ -138,8 +162,4 @@ export function ExpertOverview({ user }: { user: User }) {
       </div>
     </div>
   )
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ")
 }

@@ -52,12 +52,29 @@ export function LoginForm() {
       toast.success("Welcome back! Login successful.")
       router.push("/dashboard")
     } catch (error: any) {
-      // For development purposes, if the backend is not running, allow a "bypass" login with specific credentials
-      if (formData.email === "admin@test.com" && formData.password === "admin123") {
-        localStorage.setItem("token", "mock-token")
-        toast.success("Development Mode: Login successful.")
-        router.push("/dashboard")
-        return;
+      // Role-based mock login logic for development
+      if (process.env.NEXT_PUBLIC_MOCK_MODE === 'true' || error.message.includes('fetch')) {
+        if (formData.email === "admin@test.com") {
+          apiClient.setMockRole("owner");
+          localStorage.setItem("token", "mock-token");
+          toast.success("Development Mode: Logged in as Owner.");
+          router.push("/dashboard");
+          return;
+        }
+        if (formData.email === "buyer@test.com") {
+          apiClient.setMockRole("buyer");
+          localStorage.setItem("token", "mock-token");
+          toast.success("Development Mode: Logged in as Buyer.");
+          router.push("/dashboard");
+          return;
+        }
+        if (formData.email === "expert@test.com") {
+          apiClient.setMockRole("professional");
+          localStorage.setItem("token", "mock-token");
+          toast.success("Development Mode: Logged in as Expert.");
+          router.push("/dashboard");
+          return;
+        }
       }
       toast.error(error.message || "Invalid credentials. Please try again.")
     } finally {
