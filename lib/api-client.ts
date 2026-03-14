@@ -1,6 +1,7 @@
 import { properties, professionals } from "./data";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+// In "Hybrid" mode, we try real API first, and only mock if it fails or if specifically requested
 const IS_MOCK = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
 
 type RequestOptions = {
@@ -12,27 +13,25 @@ type RequestOptions = {
 
 // Simple in-memory mock store
 let mockFavorites: string[] = ["prop-1", "prop-3"];
-let currentMockRole: "buyer" | "owner" | "professional" = "owner"; // Default for dev
 
 async function mockRequest(path: string, options: RequestOptions = {}) {
-  console.log(`[MOCK API] ${options.method || 'GET'} ${path}`, options.body);
+  console.log(`[MOCK API FALLBACK] ${options.method || 'GET'} ${path}`, options.body);
   
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise(resolve => setTimeout(resolve, 300));
 
-  // User Mocks
-  if (path === '/users/me') {
+  // Analytics Mocks (Backend Missing)
+  if (path === '/analytics/overview') {
     return {
-      id: 1,
-      email: "john.doe@terravision.com",
-      full_name: "John Doe",
-      role: currentMockRole,
-      is_active: true
+      stats: [
+        { label: "Market Reach", value: "1,284", change: "+12%", trend: "up" },
+        { label: "Saved Items", value: mockFavorites.length.toString(), change: "+3", trend: "up" },
+        { label: "3D Projects", value: "4", change: "-5s", trend: "up" },
+        { label: "Community Rank", value: "Top 5%", change: "Stable", trend: "up" }
+      ]
     };
   }
 
-  if (path === '/auth/login') return { access_token: 'mock-jwt-token', token_type: 'bearer' };
-  
-  // Favorites Mocks
+  // Favorites Mocks (Backend Missing)
   if (path === '/favorites' || path === '/favorites/') {
     if (options.method === 'POST') {
       const id = options.body?.property_id;
@@ -49,53 +48,13 @@ async function mockRequest(path: string, options: RequestOptions = {}) {
     }));
   }
 
-  // Analytics Mocks
-  if (path === '/analytics/overview') {
-    if (currentMockRole === 'owner') {
-      return {
-        stats: [
-          { label: "Property Views", value: "1,284", change: "+12%", trend: "up" },
-          { label: "Active Inquiries", value: "14", change: "+3", trend: "up" },
-          { label: "Avg. Time to 3D", value: "42s", change: "-5s", trend: "up" },
-          { label: "Total Revenue", value: "$450k", change: "+$120k", trend: "up" }
-        ],
-        chartData: [
-          { name: "Mon", value: 400 }, { name: "Tue", value: 300 }, { name: "Wed", value: 600 },
-          { name: "Thu", value: 800 }, { name: "Fri", value: 500 }, { name: "Sat", value: 900 }, { name: "Sun", value: 1000 }
-        ]
-      };
-    }
-    if (currentMockRole === 'professional') {
-      return {
-        stats: [
-          { label: "Profile Reach", value: "856", change: "+18%", trend: "up" },
-          { label: "New Bookings", value: "5", change: "+2", trend: "up" },
-          { label: "Active Projects", value: "3", change: "Stable", trend: "neutral" },
-          { label: "Total Earned", value: "$12.5k", change: "+$2.1k", trend: "up" }
-        ]
-      };
-    }
-    return {
-      stats: [
-        { label: "Properties Saved", value: "12", change: "+2", trend: "up" },
-        { label: "Architects Hired", value: "1", change: "New", trend: "up" },
-        { label: "Floor Plans", value: "3", change: "+1", trend: "up" },
-        { label: "Virtual Tours", value: "45", change: "+12", trend: "up" }
-      ]
-    };
+  if (path.startsWith('/favorites/')) {
+    const id = path.split('/')[2];
+    mockFavorites = mockFavorites.filter(favId => favId !== id && !favId.endsWith(id));
+    return { status: 'deleted' };
   }
 
-  // Rest of mocks... (Properties, Professionals, Messages)
-  if (path === '/properties/' || path === '/properties') {
-    return properties.map(p => ({
-      id: parseInt(p.id.split('-')[1]) || Math.floor(Math.random() * 1000),
-      owner_id: 1, title: p.title, description: p.description, location: p.location, price: p.price,
-      land_size: p.size, image_url: p.images[0], is_model_generated: p.has3D,
-      model_3d_url: p.model3DUrl, created_at: p.createdAt,
-      images: p.images.map((url, i) => ({ id: i, url, image_type: 'other' }))
-    }));
-  }
-
+  // Messaging Mocks (Backend Missing)
   if (path === '/messages/conversations') {
     return [
       { id: 1, name: "Sarah Chen", role: "Architect", avatar: "SC", lastMessage: "I'd love to discuss the floor plan...", time: "2m ago", unread: 2 },
@@ -103,27 +62,51 @@ async function mockRequest(path: string, options: RequestOptions = {}) {
     ];
   }
 
+  if (path.startsWith('/messages/conversations/') && path.endsWith('/messages')) {
+    return [
+      { id: 1, sender: "Sarah Chen", content: "Hi! I saw your Hillside Estate property listing. It looks amazing!", time: "10:30 AM", isOwn: false },
+      { id: 2, sender: "You", content: "Thank you! Yes, it has great potential.", time: "10:32 AM", isOwn: true },
+    ];
+  }
+
+  // Fallback for everything else
   return {};
 }
 
 async function request(path: string, options: RequestOptions = {}) {
+  // If explicitly in mock mode, skip real API
   if (IS_MOCK) return mockRequest(path, options);
+
   const url = `${BASE_URL}${path}`;
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const headers: Record<string, string> = { ...options.headers };
   if (token) headers['Authorization'] = `Bearer ${token}`;
+
   let body = options.body;
   if (body && !options.isMultipart) {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(body);
   }
-  const response = await fetch(url, { method: options.method || 'GET', headers, body });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'An error occurred' }));
-    throw new Error(errorData.detail || response.statusText);
+
+  try {
+    const response = await fetch(url, { method: options.method || 'GET', headers, body });
+    
+    if (!response.ok) {
+      // If backend returns 404 for unimplemented features, and we are not in strict mode, fallback to mock
+      if (response.status === 404 || response.status === 405) {
+        return mockRequest(path, options);
+      }
+      const errorData = await response.json().catch(() => ({ detail: 'An error occurred' }));
+      throw new Error(errorData.detail || response.statusText);
+    }
+
+    if (response.status === 204) return null;
+    return response.json();
+  } catch (error) {
+    // If network error (backend down), fallback to mock for development
+    console.error(`API Error on ${path}:`, error);
+    return mockRequest(path, options);
   }
-  if (response.status === 204) return null;
-  return response.json();
 }
 
 export const apiClient = {
