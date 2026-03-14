@@ -1,8 +1,20 @@
+"use client"
+
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { MapPin, Maximize2, Calendar, User, CheckCircle2, Info, LayoutGrid, Sparkles } from "lucide-react"
 import type { Property } from "@/lib/data"
 import { cn } from "@/lib/utils"
+import dynamic from "next/dynamic"
+
+const PropertyMap = dynamic(() => import("./property-map"), { 
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-white/5 animate-pulse rounded-[3rem] min-h-[300px] border border-white/10">
+      <MapPin className="h-8 w-8 text-primary/40" />
+    </div>
+  )
+})
 
 interface PropertyDetailsProps {
   property: Property
@@ -180,7 +192,7 @@ export function PropertyDetails({ property }: PropertyDetailsProps) {
         </div>
       </div>
 
-      {/* Location Map Placeholder */}
+      {/* Location Map */}
       <div className="relative group">
         <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-3">
           <div className="h-10 w-10 rounded-2xl bg-primary/20 flex items-center justify-center">
@@ -188,17 +200,8 @@ export function PropertyDetails({ property }: PropertyDetailsProps) {
           </div>
           Location Overview
         </h2>
-        <div className="relative aspect-[21/9] overflow-hidden rounded-[3rem] border-4 border-white/10 bg-muted group-hover:border-primary/20 transition-all duration-500 shadow-2xl">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(var(--primary)_/_0.05)_1px,transparent_1px),linear-gradient(to_bottom,oklch(var(--primary)_/_0.05)_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-          <div className="flex h-full items-center justify-center relative z-10">
-            <div className="text-center p-8 glass rounded-[2rem] border border-white/20 shadow-2xl max-w-sm">
-              <div className="h-16 w-16 rounded-3xl bg-primary/20 flex items-center justify-center mx-auto mb-4 border border-primary/30 shadow-lg animate-bounce">
-                <MapPin className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold text-foreground mb-2">Interactive Map coming soon</h3>
-              <p className="text-sm font-medium text-muted-foreground leading-relaxed">{property.address}</p>
-            </div>
-          </div>
+        <div className="relative aspect-[21/9] overflow-hidden rounded-[3rem] shadow-2xl min-h-[300px] border-4 border-white/10 group-hover:border-primary/20 transition-all duration-500">
+          <PropertyMap address={property.address} title={property.title} />
         </div>
       </div>
     </div>

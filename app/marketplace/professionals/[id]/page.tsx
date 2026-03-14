@@ -1,6 +1,9 @@
-import { notFound } from "next/navigation"
+"use client"
+
+import { useMemo, useState } from "react"
+import { notFound, useParams } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Star, MapPin, Calendar, CheckCircle, MessageSquare, Phone, Mail, Clock, Award, Briefcase, Users } from "lucide-react"
+import { ArrowLeft, Star, MapPin, Calendar, CheckCircle, MessageSquare, Phone, Mail, Clock, Award, Briefcase, Users, Sparkles, Share2, Heart, ShieldCheck, Info, Image as ImageIcon, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,33 +11,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
-import { professionals } from "@/lib/data"
+import { useProfessional } from "@/hooks/api/use-professionals"
+import { Spinner } from "@/components/ui/spinner"
+import { CheckoutModal } from "@/components/marketplace/checkout-modal"
+import { motion, AnimatePresence } from "framer-motion"
+import { cn } from "@/lib/utils"
 
-interface ProfessionalDetailPageProps {
-  params: Promise<{ id: string }>
-}
+export default function ProfessionalDetailPage() {
+  const { id } = useParams()
+  const profId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : ''
+  const { data: professional, isLoading, error } = useProfessional(profId)
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
 
-export async function generateMetadata({ params }: ProfessionalDetailPageProps) {
-  const { id } = await params
-  const professional = professionals.find(p => p.id === id)
-  
-  if (!professional) {
-    return { title: "Professional Not Found | TerraVision" }
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+        <Spinner className="h-12 w-12 text-primary" />
+        <p className="mt-4 text-sm font-bold text-muted-foreground uppercase tracking-widest animate-pulse">Loading Expert Profile</p>
+      </div>
+    )
   }
 
-  return {
-    title: `${professional.name} - ${professional.specialty} | TerraVision`,
-    description: professional.bio,
-  }
-}
-
-export default async function ProfessionalDetailPage({ params }: ProfessionalDetailPageProps) {
-  const { id } = await params
-  const professional = professionals.find(p => p.id === id)
-
-  if (!professional) {
+  if (error || !professional) {
     notFound()
   }
+
+  // Formatting name for Fallback and URL-like replacement for email
+  const name = professional.user?.full_name || professional.name || "Professional"
+  const initials = name.split(' ').map((n: string) => n[0]).join('')
 
   const portfolio = [
     { id: 1, title: "Modern Villa Design", type: "Residential", image: "/portfolio-1.jpg" },
@@ -50,173 +54,234 @@ export default async function ProfessionalDetailPage({ params }: ProfessionalDet
   ]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background selection:bg-primary/30">
       <Navbar />
       
-      <main className="pt-20">
-        {/* Back Navigation */}
-        <div className="border-b border-border">
-          <div className="mx-auto max-w-7xl px-4 py-4">
-            <Link href="/marketplace/professionals" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Professionals
+      <main className="pt-24 pb-20">
+        {/* Glossy Profile Header */}
+        <div className="relative overflow-hidden border-b border-white/10 bg-white/5 backdrop-blur-xl">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-accent/5 via-transparent to-transparent" />
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-accent/10 rounded-full blur-[100px]" />
+
+          <div className="relative mx-auto max-w-7xl px-4 py-12 lg:px-8">
+            <Link href="/marketplace/professionals" className="inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-accent transition-colors mb-8 group">
+              <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+              Back to Marketplace
             </Link>
+
+            <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative group"
+                >
+                  <div className="absolute -inset-1 bg-gradient-to-br from-primary to-accent rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                  <Avatar className="h-40 w-40 rounded-[2.5rem] border-4 border-white/10 shadow-2xl relative z-10">
+                    <AvatarImage src={professional.avatar} alt={name} />
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white text-4xl font-serif font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-2 -right-2 z-20 h-10 w-10 rounded-2xl bg-background border-2 border-white/10 flex items-center justify-center shadow-xl">
+                    <ShieldCheck className="h-6 w-6 text-emerald-500" />
+                  </div>
+                </motion.div>
+
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="text-center md:text-left space-y-4"
+                >
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 px-4 py-1 rounded-full font-bold uppercase tracking-widest text-[10px]">
+                      {professional.profession}
+                    </Badge>
+                    {professional.verified !== false && (
+                      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 px-4 py-1 rounded-full font-bold uppercase tracking-widest text-[10px]">
+                        Verified Platinum
+                      </Badge>
+                    )}
+                  </div>
+                  <h1 className="font-serif text-5xl font-bold text-foreground md:text-6xl tracking-tight leading-tight">
+                    {name}
+                  </h1>
+                  <p className="text-xl font-medium text-muted-foreground max-w-lg">
+                    {professional.specialty || "Expert Design & Construction"}
+                  </p>
+                  
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-8 pt-2">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Rating</span>
+                      <div className="flex items-center gap-1.5 font-bold text-foreground">
+                        <Star className="h-4 w-4 fill-primary text-primary" />
+                        {professional.rating || "4.9"} ({professional.reviewCount || "24"} reviews)
+                      </div>
+                    </div>
+                    <div className="h-10 w-px bg-white/10 hidden sm:block" />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Location</span>
+                      <div className="flex items-center gap-1.5 font-bold text-foreground">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        {professional.location || "Remote / Local"}
+                      </div>
+                    </div>
+                    <div className="h-10 w-px bg-white/10 hidden sm:block" />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">Projects</span>
+                      <div className="flex items-center gap-1.5 font-bold text-foreground">
+                        <Briefcase className="h-4 w-4 text-accent" />
+                        {professional.completedProjects || "12"} Completed
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="glass p-8 rounded-[2.5rem] border border-white/20 shadow-2xl min-w-[320px] relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                   <Sparkles className="h-20 w-20 text-accent" />
+                </div>
+                <div className="relative z-10 space-y-6">
+                  <div className="space-y-1">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Rate starting at</span>
+                    <p className="font-serif text-5xl font-bold text-primary">${professional.hourlyRate || professional.hourly_rate}/hr</p>
+                  </div>
+                  <Button onClick={() => setIsCheckoutOpen(true)} size="lg" variant="glossy" className="w-full py-8 text-xl font-bold rounded-2xl shadow-xl shadow-primary/30 group">
+                    <Calendar className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
+                    Book Consultation
+                  </Button>
+                  <Button variant="outline" className="w-full h-14 rounded-2xl font-bold border-white/10 bg-white/5 hover:bg-white/10 gap-3">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    Contact Expert
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
 
-        {/* Professional Header */}
-        <section className="border-b border-border bg-card">
-          <div className="mx-auto max-w-7xl px-4 py-8">
-            <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-              <div className="flex gap-6">
-                <Avatar className="h-24 w-24 border-2 border-primary">
-                  <AvatarImage src={professional.avatar} alt={professional.name} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                    {professional.name.split(' ').map(n => n[0]).join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h1 className="font-serif text-2xl font-medium text-foreground md:text-3xl">{professional.name}</h1>
-                    {professional.verified && (
-                      <CheckCircle className="h-5 w-5 text-primary" />
-                    )}
-                  </div>
-                  <p className="mt-1 text-lg text-muted-foreground">{professional.specialty}</p>
-                  <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      {professional.location}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-primary text-primary" />
-                      {professional.rating} ({professional.reviewCount} reviews)
-                    </span>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="bg-secondary text-secondary-foreground">
-                      {professional.profession}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <p className="text-right text-sm text-muted-foreground">Starting at</p>
-                <p className="text-right text-2xl font-bold text-foreground">${professional.hourlyRate}/hr</p>
-                <Button className="mt-2 bg-primary text-primary-foreground hover:bg-primary/90">
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Contact Professional
-                </Button>
-                <Button variant="outline" className="border-border text-foreground hover:bg-secondary">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Schedule Consultation
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Main Content */}
-        <section className="py-8">
-          <div className="mx-auto max-w-7xl px-4">
-            <div className="grid gap-8 lg:grid-cols-3">
+        {/* Main Content Area */}
+        <section className="py-16">
+          <div className="mx-auto max-w-7xl px-4 lg:px-8">
+            <div className="grid gap-16 lg:grid-cols-3">
               {/* Left Column - Tabs Content */}
               <div className="lg:col-span-2">
-                <Tabs defaultValue="portfolio">
-                  <TabsList className="w-full justify-start bg-card border border-border">
-                    <TabsTrigger value="portfolio" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                      Portfolio
-                    </TabsTrigger>
-                    <TabsTrigger value="about" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                      About
-                    </TabsTrigger>
-                    <TabsTrigger value="reviews" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                      Reviews
-                    </TabsTrigger>
+                <Tabs defaultValue="portfolio" className="w-full">
+                  <TabsList className="glass border-white/10 p-1 rounded-2xl mb-8 inline-flex">
+                    <TabsTrigger value="portfolio" className="rounded-xl px-8 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Portfolio</TabsTrigger>
+                    <TabsTrigger value="about" className="rounded-xl px-8 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Expertise</TabsTrigger>
+                    <TabsTrigger value="reviews" className="rounded-xl px-8 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">Feedback</TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="portfolio" className="mt-6">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      {portfolio.map((item) => (
-                        <Card key={item.id} className="overflow-hidden border-border bg-card group cursor-pointer">
-                          <div className="aspect-video bg-muted relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <div className="absolute bottom-3 left-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <p className="text-sm font-medium text-foreground">{item.title}</p>
-                              <p className="text-xs text-muted-foreground">{item.type}</p>
+                  <TabsContent value="portfolio">
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      {portfolio.map((item, index) => (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          viewport={{ once: true }}
+                          key={item.id}
+                        >
+                          <Card className="overflow-hidden border-white/10 bg-white/5 backdrop-blur-md rounded-[2rem] group cursor-pointer hover:border-primary/50 transition-all shadow-xl">
+                            <div className="aspect-video bg-muted relative overflow-hidden">
+                              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <ImageIcon className="h-12 w-12 text-white/20 group-hover:scale-110 transition-transform duration-500" />
+                              </div>
+                              <div className="absolute bottom-6 left-6 right-6 translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
+                                <Badge className="bg-primary text-white border-none mb-2">Project Asset</Badge>
+                                <p className="text-xl font-bold text-white">{item.title}</p>
+                                <p className="text-sm font-medium text-white/70">{item.type}</p>
+                              </div>
                             </div>
-                          </div>
-                          <CardContent className="p-4">
-                            <h3 className="font-medium text-foreground">{item.title}</h3>
-                            <p className="text-sm text-muted-foreground">{item.type}</p>
-                          </CardContent>
-                        </Card>
+                            <CardContent className="p-6">
+                              <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors">{item.title}</h3>
+                              <p className="text-sm font-medium text-muted-foreground mt-1">{item.type}</p>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
                       ))}
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="about" className="mt-6">
-                    <Card className="border-border bg-card">
-                      <CardContent className="p-6">
-                        <h3 className="font-serif text-lg font-medium text-foreground mb-4">About</h3>
-                        <p className="text-muted-foreground leading-relaxed">
-                          {professional.bio}
+                  <TabsContent value="about">
+                    <div className="glass rounded-[2.5rem] border border-white/10 p-10 shadow-xl space-y-10">
+                      <div>
+                        <h3 className="text-3xl font-serif font-bold text-foreground mb-6 flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-2xl bg-primary/20 flex items-center justify-center">
+                            <Info className="h-5 w-5 text-primary" />
+                          </div>
+                          About {name.split(' ')[0]}
+                        </h3>
+                        <p className="text-xl text-muted-foreground leading-relaxed font-medium">
+                          {professional.bio || "A dedicated professional with a track record of delivering exceptional results in the field of real estate development and design."}
                         </p>
+                      </div>
 
-                        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                          <div className="flex items-center gap-3 p-4 rounded-lg bg-secondary">
-                            <Award className="h-8 w-8 text-primary" />
-                            <div>
-                              <p className="text-2xl font-bold text-foreground">{professional.completedProjects}</p>
-                              <p className="text-xs text-muted-foreground">Projects Completed</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 p-4 rounded-lg bg-secondary">
-                            <Briefcase className="h-8 w-8 text-primary" />
-                            <div>
-                              <p className="text-2xl font-bold text-foreground">15+</p>
-                              <p className="text-xs text-muted-foreground">Years Experience</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 p-4 rounded-lg bg-secondary">
-                            <Users className="h-8 w-8 text-primary" />
-                            <div>
-                              <p className="text-2xl font-bold text-foreground">100+</p>
-                              <p className="text-xs text-muted-foreground">Happy Clients</p>
-                            </div>
+                      <div className="grid gap-6 sm:grid-cols-3">
+                        <div className="flex flex-col items-center gap-3 p-8 rounded-[2rem] bg-white/5 border border-white/5 text-center">
+                          <Award className="h-10 w-10 text-primary" />
+                          <div>
+                            <p className="text-3xl font-bold text-foreground">{professional.completedProjects || "12"}</p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Milestones</p>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                        <div className="flex flex-col items-center gap-3 p-8 rounded-[2rem] bg-white/5 border border-white/5 text-center">
+                          <Briefcase className="h-10 w-10 text-accent" />
+                          <div>
+                            <p className="text-3xl font-bold text-foreground">15+</p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Years Pro</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-center gap-3 p-8 rounded-[2rem] bg-white/5 border border-white/5 text-center">
+                          <Users className="h-10 w-10 text-primary" />
+                          <div>
+                            <p className="text-3xl font-bold text-foreground">100+</p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Partnerships</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </TabsContent>
 
-                  <TabsContent value="reviews" className="mt-6">
-                    <div className="space-y-4">
+                  <TabsContent value="reviews">
+                    <div className="space-y-6">
                       {reviews.map((review) => (
-                        <Card key={review.id} className="border-border bg-card">
-                          <CardContent className="p-6">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-10 w-10">
-                                  <AvatarFallback className="bg-secondary text-secondary-foreground">
+                        <Card key={review.id} className="glass border-white/10 rounded-[2.5rem] shadow-lg overflow-hidden">
+                          <CardContent className="p-8">
+                            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                              <div className="flex items-center gap-4">
+                                <Avatar className="h-14 w-14 rounded-2xl border-2 border-white/10 shadow-lg">
+                                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-primary font-bold">
                                     {review.author.split(' ').map(n => n[0]).join('')}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div>
-                                  <p className="font-medium text-foreground">{review.author}</p>
-                                  <p className="text-xs text-muted-foreground">{review.date}</p>
+                                  <p className="font-bold text-lg text-foreground">{review.author}</p>
+                                  <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                                    <Clock className="h-3 w-3" />
+                                    {review.date}
+                                  </div>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
                                 {Array.from({ length: 5 }).map((_, i) => (
                                   <Star
                                     key={i}
-                                    className={`h-4 w-4 ${i < review.rating ? 'fill-primary text-primary' : 'text-muted'}`}
+                                    className={cn("h-4 w-4", i < review.rating ? 'fill-primary text-primary' : 'text-white/10')}
                                   />
                                 ))}
                               </div>
                             </div>
-                            <p className="mt-4 text-muted-foreground">{review.comment}</p>
+                            <p className="mt-6 text-lg text-muted-foreground leading-relaxed font-medium italic">
+                              "{review.comment}"
+                            </p>
                           </CardContent>
                         </Card>
                       ))}
@@ -225,53 +290,75 @@ export default async function ProfessionalDetailPage({ params }: ProfessionalDet
                 </Tabs>
               </div>
 
-              {/* Right Column - Contact Info */}
-              <div className="space-y-6">
-                <Card className="border-border bg-card">
-                  <CardHeader>
-                    <CardTitle className="font-serif text-lg text-foreground">Contact Information</CardTitle>
+              {/* Right Column - Contact & Status */}
+              <div className="space-y-8">
+                <Card className="glass border-white/10 rounded-[2.5rem] shadow-xl overflow-hidden">
+                  <CardHeader className="p-8 pb-4">
+                    <CardTitle className="text-xl font-bold">Official Channels</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                      <Phone className="h-4 w-4" />
-                      <span>+1 (555) 123-4567</span>
+                  <CardContent className="p-8 pt-4 space-y-5">
+                    <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 group hover:bg-white/10 transition-colors">
+                      <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30">
+                        <Phone className="h-5 w-5 text-primary" />
+                      </div>
+                      <span className="font-bold text-foreground">+1 (555) 123-4567</span>
                     </div>
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                      <Mail className="h-4 w-4" />
-                      <span>{professional.name.toLowerCase().replace(' ', '.')}@example.com</span>
+                    <div className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 group hover:bg-white/10 transition-colors">
+                      <div className="h-10 w-10 rounded-xl bg-accent/20 flex items-center justify-center border border-accent/30">
+                        <Mail className="h-5 w-5 text-accent" />
+                      </div>
+                      <span className="font-bold text-foreground truncate">{name.toLowerCase().replace(' ', '.')}@vision.com</span>
                     </div>
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>Response within 24 hours</span>
+                    <div className="flex items-center gap-4 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+                      <div className="h-10 w-10 rounded-xl bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                        <Clock className="h-5 w-5 text-emerald-500" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-emerald-500 uppercase tracking-widest">Active Now</span>
+                        <span className="text-[10px] font-bold text-emerald-500/70 uppercase">Typical response: 2h</span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border-border bg-card">
-                  <CardHeader>
-                    <CardTitle className="font-serif text-lg text-foreground">Availability</CardTitle>
+                <Card className="glass border-white/10 rounded-[2.5rem] shadow-xl overflow-hidden">
+                  <CardHeader className="p-8 pb-4">
+                    <CardTitle className="text-xl font-bold">Standard Availability</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Monday - Friday</span>
-                        <span className="text-foreground">9:00 AM - 6:00 PM</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Saturday</span>
-                        <span className="text-foreground">10:00 AM - 2:00 PM</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Sunday</span>
-                        <span className="text-foreground">Closed</span>
-                      </div>
-                    </div>
-                    <div className="mt-4 flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-green-500" />
-                      <span className="text-sm text-green-500">Currently Available</span>
+                  <CardContent className="p-8 pt-4">
+                    <div className="space-y-4">
+                      {[
+                        { day: "Mon - Fri", time: "9:00 AM - 6:00 PM" },
+                        { day: "Saturday", time: "10:00 AM - 2:00 PM" },
+                        { day: "Sunday", time: "Offline" }
+                      ].map(s => (
+                        <div key={s.day} className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5">
+                          <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{s.day}</span>
+                          <span className="text-sm font-bold text-foreground">{s.time}</span>
+                        </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
+
+                <motion.div 
+                  whileHover={{ scale: 1.02 }}
+                  className="rounded-[2.5rem] bg-gradient-to-br from-primary/20 to-accent/20 border border-white/20 p-8 relative overflow-hidden group shadow-xl"
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 transition-transform duration-700">
+                    <Zap className="h-24 w-24 text-primary" />
+                  </div>
+                  <div className="relative z-10">
+                    <h4 className="text-2xl font-bold text-foreground mb-2">Priority Matching</h4>
+                    <p className="text-sm font-medium text-muted-foreground leading-relaxed mb-6">
+                      Get fast-tracked into {name.split(' ')[0]}'s schedule by starting a project inquiry today.
+                    </p>
+                    <Button variant="glossy" className="w-full h-14 rounded-2xl font-bold gap-2">
+                      <Sparkles className="h-5 w-5" />
+                      Boost My Request
+                    </Button>
+                  </div>
+                </motion.div>
               </div>
             </div>
           </div>
@@ -279,6 +366,18 @@ export default async function ProfessionalDetailPage({ params }: ProfessionalDet
       </main>
 
       <Footer />
+
+      <CheckoutModal 
+        isOpen={isCheckoutOpen} 
+        onClose={() => setIsCheckoutOpen(false)} 
+        type="professional"
+        data={{
+          id: professional.id.toString(),
+          title: name,
+          price: professional.hourlyRate || professional.hourly_rate,
+          subtitle: professional.profession
+        }}
+      />
     </div>
   )
 }

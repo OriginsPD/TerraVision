@@ -1,45 +1,27 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useMemo } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { PropertyFilters, type FilterState } from "@/components/properties/property-filters"
 import { PropertyGrid } from "@/components/properties/property-grid"
-import { apiClient } from "@/lib/api-client"
 import { Spinner } from "@/components/ui/spinner"
-import type { Property } from "@/lib/data"
+import { useProperties } from "@/hooks/api/use-properties"
 import { motion } from "framer-motion"
 import { Sparkles, LayoutGrid, Search } from "lucide-react"
 
 export default function PropertiesPage() {
-  const [allProperties, setAllProperties] = useState<Property[]>([])
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: allProperties, isLoading, error } = useProperties()
+  const [filters, setFilters] = useState<FilterState>({
+    search: "",
+    priceRange: [0, 10000000],
+    sizeRange: [0, 1000],
+    selectedTypes: []
+  })
 
-  useEffect(() => {
-    async function fetchProperties() {
-      try {
-        setIsLoading(true)
-        // In a real app, this would be an API call
-        // const data = await apiClient.get("/properties/")
-        
-        // Using mock data for now to ensure visibility during development
-        const { properties: mockData } = await import("@/lib/data")
-        
-        setAllProperties(mockData)
-        setFilteredProperties(mockData)
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch properties")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchProperties()
-  }, [])
-
-  const handleFilterChange = (filters: FilterState) => {
+  const filteredProperties = useMemo(() => {
+    if (!allProperties) return []
+    
     let filtered = [...allProperties]
 
     if (filters.search) {
@@ -64,8 +46,8 @@ export default function PropertiesPage() {
       filtered = filtered.filter(p => filters.selectedTypes.includes(p.type))
     }
 
-    setFilteredProperties(filtered)
-  }
+    return filtered
+  }, [allProperties, filters])
 
   return (
     <main className="min-h-screen bg-background selection:bg-primary/30">
@@ -120,7 +102,7 @@ export default function PropertiesPage() {
                   <h3 className="text-lg font-bold text-foreground">Refine Search</h3>
                 </div>
                 <div className="rounded-[2.5rem] border border-white/20 bg-white/5 backdrop-blur-md p-2 shadow-xl">
-                  <PropertyFilters onFilterChange={handleFilterChange} />
+                  <PropertyFilters onFilterChange={setFilters} />
                 </div>
               </div>
             </aside>
@@ -141,7 +123,7 @@ export default function PropertiesPage() {
                     <Sparkles className="h-8 w-8 text-destructive rotate-45" />
                   </div>
                   <h3 className="text-2xl font-bold text-foreground mb-2">Something went wrong</h3>
-                  <p className="text-muted-foreground max-w-md">{error}</p>
+                  <p className="text-muted-foreground max-w-md">{(error as Error).message}</p>
                   <button 
                     onClick={() => window.location.reload()}
                     className="mt-6 px-8 py-3 rounded-full bg-destructive text-white font-bold hover:bg-destructive/80 transition-colors"
@@ -157,7 +139,7 @@ export default function PropertiesPage() {
                   <h3 className="text-3xl font-bold text-foreground mb-2">No properties found</h3>
                   <p className="text-lg text-muted-foreground max-w-md font-medium">Try adjusting your filters to find what you're looking for.</p>
                   <button 
-                    onClick={() => handleFilterChange({ search: "", priceRange: [0, 10000000], sizeRange: [0, 1000], selectedTypes: [] })}
+                    onClick={() => setFilters({ search: "", priceRange: [0, 10000000], sizeRange: [0, 1000], selectedTypes: [] })}
                     className="mt-8 px-10 py-4 rounded-full bg-primary text-white font-bold shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-all"
                   >
                     Reset All Filters

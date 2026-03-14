@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useMemo } from "react"
 import { notFound, useParams } from "next/navigation"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
@@ -8,98 +8,27 @@ import { PropertyViewer } from "@/components/properties/property-viewer"
 import { PropertyDetails } from "@/components/properties/property-details"
 import { PropertyContact } from "@/components/properties/property-contact"
 import { SimilarProperties } from "@/components/properties/similar-properties"
-import { apiClient } from "@/lib/api-client"
 import { Spinner } from "@/components/ui/spinner"
-import type { Property } from "@/lib/data"
+import { useProperty, useProperties } from "@/hooks/api/use-properties"
 import { motion } from "framer-motion"
-import { Sparkles, MapPin, Box, ArrowLeft, Share2, Heart } from "lucide-react"
+import { Sparkles, MapPin, Box, ArrowLeft, Share2 } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { FavoriteButton } from "@/components/ui/favorite-button"
 
 export default function PropertyPage() {
   const { id } = useParams()
-  const [property, setProperty] = useState<Property | null>(null)
-  const [similarProperties, setSimilarProperties] = useState<Property[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const propertyId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : ''
+  
+  const { data: property, isLoading, error } = useProperty(propertyId)
+  const { data: allProperties } = useProperties()
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-
-    async function fetchProperty() {
-      try {
-        setIsLoading(true)
-        // Try real API first
-        try {
-          const p = await apiClient.get(`/properties/${id}`)
-          const mapped: Property = {
-            id: p.id.toString(),
-            title: p.title,
-            description: p.description,
-            location: p.location,
-            address: p.location,
-            price: p.price,
-            size: p.land_size,
-            sizeUnit: "acres",
-            type: "rural",
-            status: "available",
-            has3D: p.is_model_generated,
-            model3DUrl: p.model_3d_url,
-            images: [p.image_url, ...(p.images?.map((img: any) => img.url) || [])],
-            features: [],
-            ownerId: p.owner_id.toString(),
-            ownerName: "Owner",
-            createdAt: p.created_at,
-            featured: false,
-          }
-          setProperty(mapped)
-          
-          if (!mapped.has3D) {
-            interval = setInterval(async () => {
-              const updated = await apiClient.get(`/properties/${id}`)
-              if (updated.is_model_generated) {
-                const updatedMapped = { ...mapped, has3D: true, model3DUrl: updated.model_3d_url }
-                setProperty(updatedMapped)
-                clearInterval(interval)
-              }
-            }, 5000)
-          }
-        } catch (apiErr) {
-          // Fallback to mock data for development
-          const { properties: mockData } = await import("@/lib/data")
-          const found = mockData.find(p => p.id === id)
-          if (found) {
-            setProperty(found)
-          } else {
-            setError("Property not found")
-          }
-        }
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch property")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    async function fetchSimilar() {
-      try {
-        const { properties: mockData } = await import("@/lib/data")
-        const similar = mockData
-          .filter(p => p.id !== id)
-          .slice(0, 3)
-        setSimilarProperties(similar)
-      } catch (err) {
-        console.error("Failed to fetch similar properties", err)
-      }
-    }
-
-    fetchProperty()
-    fetchSimilar()
-
-    return () => {
-      if (interval) clearInterval(interval)
-    }
-  }, [id])
+  const similarProperties = useMemo(() => {
+    if (!allProperties || !property) return []
+    return allProperties
+      .filter(p => p.id !== propertyId)
+      .slice(0, 3)
+  }, [allProperties, property, propertyId])
 
   if (isLoading) {
     return (
@@ -144,9 +73,7 @@ export default function PropertyPage() {
               <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                 <Share2 className="h-5 w-5 text-foreground" />
               </button>
-              <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-                <Heart className="h-5 w-5 text-foreground" />
-              </button>
+              <FavoriteButton propertyId={property.id} />
               <Button variant="glossy" className="rounded-xl px-6 h-10 font-bold shadow-lg shadow-primary/20">
                 Contact Agent
               </Button>

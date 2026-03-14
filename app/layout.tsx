@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next'
 import { Instrument_Sans, Instrument_Serif } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
+import { ThemeProvider } from "@/components/theme-provider"
+import { QueryProvider } from "@/providers/query-provider"
 
 const instrumentSans = Instrument_Sans({ 
   subsets: ["latin"],
@@ -49,9 +51,18 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${instrumentSans.variable} ${instrumentSerif.variable} font-sans antialiased`}>
-        {children}
+        <QueryProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </QueryProvider>
         <Analytics />
       </body>
     </html>

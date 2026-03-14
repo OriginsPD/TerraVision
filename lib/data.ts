@@ -13,6 +13,7 @@ export interface Property {
   status: "available" | "pending" | "sold" | "For Sale"
   has3D: boolean
   model3DUrl?: string
+  generationStatus?: "none" | "pending" | "completed" | "failed"
   images: string[]
   features: string[]
   ownerId: string

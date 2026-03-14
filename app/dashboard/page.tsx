@@ -18,11 +18,14 @@ import {
   Zap,
   Bell,
   Plus,
-  Maximize2
+  Maximize2,
+  Cpu,
+  Loader2
 } from "lucide-react"
-import { properties } from "@/lib/data"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { useProperties } from "@/hooks/api/use-properties"
+import { Progress } from "@/components/ui/progress"
 
 const stats = [
   { label: "Active Listings", value: "3", icon: Building2, change: "+1 this month", color: "text-primary", bg: "bg-primary/10" },
@@ -39,7 +42,11 @@ const recentActivity = [
 ]
 
 export default function DashboardPage() {
-  const userProperties = properties.slice(0, 3)
+  const { data: allProperties, isLoading } = useProperties()
+  
+  // Filter for user's properties (in a real app, we'd filter by ownerId)
+  const userProperties = (allProperties || []).slice(0, 3)
+  const pendingGenerations = (allProperties || []).filter(p => p.generationStatus === "pending")
 
   return (
     <main className="flex-1 p-6 lg:p-10 bg-background/50 relative overflow-hidden">
@@ -62,11 +69,55 @@ export default function DashboardPage() {
             <p className="mt-2 text-lg font-medium text-muted-foreground/80">Here's a snapshot of your property empire today.</p>
           </motion.div>
 
-          <Button variant="glossy" className="rounded-2xl px-8 py-7 font-bold text-lg shadow-xl shadow-primary/20">
-            <Plus className="h-5 w-5 mr-2" />
-            Create New Listing
+          <Button variant="glossy" asChild className="rounded-2xl px-8 py-7 font-bold text-lg shadow-xl shadow-primary/20">
+            <Link href="/dashboard/my-properties/new">
+              <Plus className="h-5 w-5 mr-2" />
+              Create New Listing
+            </Link>
           </Button>
         </div>
+
+        {/* AI Status Banner - If there are pending models */}
+        <AnimatePresence>
+          {pendingGenerations.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: "auto", marginBottom: 48 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="glass rounded-[2.5rem] border border-primary/30 p-8 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-10">
+                  <Cpu className="h-32 w-32 text-primary animate-pulse" />
+                </div>
+                
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 relative z-10">
+                  <div className="flex items-center gap-6">
+                    <div className="h-16 w-16 rounded-2xl bg-primary/20 flex items-center justify-center border border-primary/30 shadow-lg">
+                      <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-foreground">AI Generation in Progress</h2>
+                      <p className="text-muted-foreground font-medium">We're currently building {pendingGenerations.length} immersive 3D models for you.</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 max-w-md space-y-3">
+                    <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-primary">
+                      <span>Overall Progress</span>
+                      <span>65%</span>
+                    </div>
+                    <Progress value={65} className="h-3 bg-white/5 border border-white/10" />
+                  </div>
+
+                  <Button variant="outline" size="sm" className="rounded-xl font-bold border-primary/30 text-primary hover:bg-primary/10 px-6">
+                    View Queue
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Stats Grid - Glossy Cards */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -147,12 +198,14 @@ export default function DashboardPage() {
                 <CardTitle className="text-xl font-bold">Smart Tools</CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-3">
-                <Button className="w-full justify-between h-14 rounded-2xl bg-white/5 border-white/10 hover:bg-primary hover:text-white transition-all group font-bold px-6" variant="outline">
-                  <div className="flex items-center gap-3">
-                    <Building2 className="h-5 w-5" />
-                    New Listing
-                  </div>
-                  <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Button asChild className="w-full justify-between h-14 rounded-2xl bg-white/5 border-white/10 hover:bg-primary hover:text-white transition-all group font-bold px-6" variant="outline">
+                  <Link href="/dashboard/my-properties/new">
+                    <div className="flex items-center gap-3">
+                      <Building2 className="h-5 w-5" />
+                      New Listing
+                    </div>
+                    <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </Link>
                 </Button>
                 <Button className="w-full justify-between h-14 rounded-2xl bg-white/5 border-white/10 hover:bg-accent hover:text-white transition-all group font-bold px-6" variant="outline">
                   <div className="flex items-center gap-3">
@@ -197,58 +250,76 @@ export default function DashboardPage() {
             </Button>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {userProperties.map((property, index) => (
-              <motion.div
-                key={property.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 + 0.5 }}
-              >
-                <Link href={`/properties/${property.id}`} className="group block">
-                  <Card className="glass border-white/10 hover:border-primary/50 transition-all hover:shadow-2xl group overflow-hidden rounded-[2.5rem]">
-                    <div className="relative aspect-[16/10] overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30 z-10 opacity-40 transition-opacity group-hover:opacity-20" />
-                      <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
-                        <Box className="h-12 w-12 text-primary/30 group-hover:scale-110 transition-transform duration-500" />
-                      </div>
-                      <div className="absolute left-4 top-4 flex gap-2 z-20">
-                        <Badge className={cn(
-                          "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border-none shadow-lg",
-                          property.status === "available" ? "bg-emerald-500 text-white" :
-                          property.status === "pending" ? "bg-amber-500 text-white" :
-                          "bg-rose-500 text-white"
-                        )}>
-                          {property.status}
-                        </Badge>
-                        {property.has3D && (
-                          <Badge className="bg-white/20 backdrop-blur-md border border-white/20 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                            3D Ready
+          {isLoading ? (
+            <div className="flex h-64 items-center justify-center">
+              <Spinner className="h-10 w-10 text-primary" />
+            </div>
+          ) : (
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {userProperties.map((property, index) => (
+                <motion.div
+                  key={property.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 + 0.5 }}
+                >
+                  <Link href={`/properties/${property.id}`} className="group block">
+                    <Card className="glass border-white/10 hover:border-primary/50 transition-all hover:shadow-2xl group overflow-hidden rounded-[2.5rem]">
+                      <div className="relative aspect-[16/10] overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30 z-10 opacity-40 transition-opacity group-hover:opacity-20" />
+                        <div className="absolute inset-0 flex items-center justify-center bg-muted/20">
+                          {property.images[0] ? (
+                            <img src={property.images[0]?.startsWith('http') || property.images[0]?.startsWith('/') ? property.images[0] : `http://localhost:8000${property.images[0]}`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" alt={property.title} />
+                          ) : (
+                            <Box className="h-12 w-12 text-primary/30 group-hover:scale-110 transition-transform duration-500" />
+                          )}
+                        </div>
+                        <div className="absolute left-4 top-4 flex gap-2 z-20">
+                          <Badge className={cn(
+                            "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border-none shadow-lg",
+                            property.status === "available" ? "bg-emerald-500 text-white" :
+                            property.status === "pending" ? "bg-amber-500 text-white" :
+                            "bg-rose-500 text-white"
+                          )}>
+                            {property.status}
                           </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <CardContent className="p-8">
-                      <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors mb-2 tracking-tight">{property.title}</h3>
-                      <div className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground mb-6">
-                        <MapPin className="h-4 w-4 text-primary" />
-                        {property.location}
-                      </div>
-                      <div className="flex items-center justify-between border-t border-white/10 pt-6">
-                        <p className="font-serif text-2xl font-bold text-foreground">${property.price.toLocaleString()}</p>
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-foreground bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
-                          <Maximize2 className="h-3.5 w-3.5 text-accent" />
-                          {property.size} {property.sizeUnit}
+                          {property.has3D ? (
+                            <Badge className="bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 text-emerald-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                              3D Ready
+                            </Badge>
+                          ) : property.generationStatus === "pending" ? (
+                            <Badge className="bg-primary/20 backdrop-blur-md border border-primary/30 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest animate-pulse">
+                              Generating 3D...
+                            </Badge>
+                          ) : null}
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+                      <CardContent className="p-8">
+                        <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors mb-2 tracking-tight">{property.title}</h3>
+                        <div className="flex items-center gap-1.5 text-sm font-bold text-muted-foreground mb-6">
+                          <MapPin className="h-4 w-4 text-primary" />
+                          {property.location}
+                        </div>
+                        <div className="flex items-center justify-between border-t border-white/10 pt-6">
+                          <p className="font-serif text-2xl font-bold text-foreground">${property.price.toLocaleString()}</p>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-foreground bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+                            <Maximize2 className="h-3.5 w-3.5 text-accent" />
+                            {property.size} {property.sizeUnit}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </main>
   )
+}
+
+function Spinner({ className }: { className?: string }) {
+  return <Loader2 className={cn("animate-spin", className)} />
 }

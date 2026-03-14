@@ -4,13 +4,18 @@ import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
-import { Building2, Users, FileText, ArrowRight, Star, MapPin, Sparkles, Hammer, DraftingCompass } from "lucide-react"
-import { professionals, floorPlans } from "@/lib/data"
+import { Users, FileText, ArrowRight, Star, MapPin, Sparkles, DraftingCompass } from "lucide-react"
 import { motion } from "framer-motion"
+import { useProfessionals } from "@/hooks/api/use-professionals"
+import { useFloorPlans } from "@/hooks/api/use-floor-plans"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function MarketplacePage() {
-  const featuredProfessionals = professionals.slice(0, 4)
-  const featuredPlans = floorPlans.slice(0, 3)
+  const { data: professionals, isLoading: loadingPro } = useProfessionals()
+  const { data: floorPlans, isLoading: loadingPlans } = useFloorPlans()
+
+  const featuredProfessionals = (professionals || []).slice(0, 4)
+  const featuredPlans = (floorPlans || []).slice(0, 3)
 
   return (
     <main className="min-h-screen bg-background selection:bg-primary/30">
@@ -124,51 +129,60 @@ export default function MarketplacePage() {
             </Button>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredProfessionals.map((professional, index) => (
-              <motion.div
-                key={professional.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Link 
-                  href={`/marketplace/professionals/${professional.id}`}
-                  className="group block h-full"
-                >
-                  <div className="h-full rounded-[2.5rem] border border-white/20 bg-white/5 p-8 backdrop-blur-md shadow-xl transition-all hover:border-primary/50 group-hover:bg-white/10 group-hover:-translate-y-2">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-[1.5rem] bg-gradient-to-br from-primary to-accent shadow-lg mb-6">
-                      <span className="font-serif text-2xl font-bold text-white">
-                        {professional.name.split(" ").map(n => n[0]).join("")}
-                      </span>
-                    </div>
-                    <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{professional.name}</h3>
-                    <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest mt-1">{professional.specialty}</p>
-                    
-                    <div className="mt-6 flex items-center gap-2">
-                      <div className="flex items-center gap-1.5 bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-                        <Star className="h-4 w-4 fill-primary text-primary" />
-                        <span className="font-bold text-primary">{professional.rating}</span>
+          {loadingPro ? (
+            <div className="flex h-64 items-center justify-center">
+              <Spinner className="h-10 w-10 text-primary" />
+            </div>
+          ) : (
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              {featuredProfessionals.map((pro, index) => {
+                const name = pro.user?.full_name || "Professional";
+                return (
+                  <motion.div
+                    key={pro.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                  >
+                    <Link 
+                      href={`/marketplace/professionals/${pro.id}`}
+                      className="group block h-full"
+                    >
+                      <div className="h-full rounded-[2.5rem] border border-white/20 bg-white/5 p-8 backdrop-blur-md shadow-xl transition-all hover:border-primary/50 group-hover:bg-white/10 group-hover:-translate-y-2">
+                        <div className="flex h-20 w-20 items-center justify-center rounded-[1.5rem] bg-gradient-to-br from-primary to-accent shadow-lg mb-6">
+                          <span className="font-serif text-2xl font-bold text-white">
+                            {name.split(" ").map((n: string) => n[0]).join("")}
+                          </span>
+                        </div>
+                        <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{name}</h3>
+                        <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest mt-1">{pro.profession}</p>
+                        
+                        <div className="mt-6 flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                            <Star className="h-4 w-4 fill-primary text-primary" />
+                            <span className="font-bold text-primary">4.9</span>
+                          </div>
+                          <span className="text-xs font-bold text-muted-foreground">(24 reviews)</span>
+                        </div>
+
+                        <div className="mt-4 flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <MapPin className="h-4 w-4 text-accent" />
+                          Remote / Local
+                        </div>
+
+                        <div className="mt-8 pt-6 border-t border-white/10">
+                          <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
+                            Rate: <span className="text-lg text-foreground ml-1">${pro.hourly_rate}/hr</span>
+                          </p>
+                        </div>
                       </div>
-                      <span className="text-xs font-bold text-muted-foreground">({professional.reviewCount} reviews)</span>
-                    </div>
-
-                    <div className="mt-4 flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                      <MapPin className="h-4 w-4 text-accent" />
-                      {professional.location}
-                    </div>
-
-                    <div className="mt-8 pt-6 border-t border-white/10">
-                      <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
-                        Rate: <span className="text-lg text-foreground ml-1">${professional.hourlyRate}/hr</span>
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+                    </Link>
+                  </motion.div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -195,67 +209,73 @@ export default function MarketplacePage() {
             </Button>
           </div>
 
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredPlans.map((plan, index) => (
-              <motion.div
-                key={plan.id}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Link 
-                  href={`/marketplace/floor-plans/${plan.id}`}
-                  className="group block h-full"
+          {loadingPlans ? (
+            <div className="flex h-64 items-center justify-center">
+              <Spinner className="h-10 w-10 text-accent" />
+            </div>
+          ) : (
+            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {featuredPlans.map((plan, index) => (
+                <motion.div
+                  key={plan.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  viewport={{ once: true }}
                 >
-                  <div className="overflow-hidden h-full rounded-[2.5rem] border border-white/20 bg-background/50 backdrop-blur-md shadow-xl transition-all hover:border-accent/50 group-hover:bg-background/80 group-hover:-translate-y-2">
-                    <div className="relative aspect-[16/10] bg-muted/20 overflow-hidden">
-                      {/* Pattern Background for plan placeholder */}
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,oklch(var(--accent)_/_0.1)_0%,transparent_70%)]" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="h-20 w-20 rounded-[1.5rem] bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-inner">
-                          <FileText className="h-10 w-10 text-accent/40" />
+                  <Link 
+                    href={`/marketplace/floor-plans/${plan.id}`}
+                    className="group block h-full"
+                  >
+                    <div className="overflow-hidden h-full rounded-[2.5rem] border border-white/20 bg-background/50 backdrop-blur-md shadow-xl transition-all hover:border-accent/50 group-hover:bg-background/80 group-hover:-translate-y-2">
+                      <div className="relative aspect-[16/10] bg-muted/20 overflow-hidden">
+                        {/* Pattern Background for plan placeholder */}
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,oklch(var(--accent)_/_0.1)_0%,transparent_70%)]" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="h-20 w-20 rounded-[1.5rem] bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-inner">
+                            <FileText className="h-10 w-10 text-accent/40" />
+                          </div>
+                        </div>
+                        <div className="absolute top-4 right-4 glass px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-widest border border-white/20">
+                          {plan.rating} Rating
                         </div>
                       </div>
-                      <div className="absolute top-4 right-4 glass px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-widest border border-white/20">
-                        {plan.rating} Rating
-                      </div>
-                    </div>
-                    <div className="p-8">
-                      <h3 className="text-2xl font-bold text-foreground group-hover:text-accent transition-colors">{plan.title}</h3>
-                      <p className="mt-1 text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                        by <span className="text-foreground">{plan.architectName}</span>
-                      </p>
-                      
-                      <div className="mt-8 flex items-center gap-4">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Area</span>
-                          <span className="text-sm font-bold text-foreground">{plan.sqft.toLocaleString()} sqft</span>
+                      <div className="p-8">
+                        <h3 className="text-2xl font-bold text-foreground group-hover:text-accent transition-colors">{plan.title}</h3>
+                        <p className="mt-1 text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                          by <span className="text-foreground">{plan.architectName}</span>
+                        </p>
+                        
+                        <div className="mt-8 flex items-center gap-4">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Area</span>
+                            <span className="text-sm font-bold text-foreground">{plan.sqft.toLocaleString()} sqft</span>
+                          </div>
+                          <div className="h-8 w-px bg-white/10" />
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Beds</span>
+                            <span className="text-sm font-bold text-foreground">{plan.bedrooms}</span>
+                          </div>
+                          <div className="h-8 w-px bg-white/10" />
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Baths</span>
+                            <span className="text-sm font-bold text-foreground">{plan.bathrooms}</span>
+                          </div>
                         </div>
-                        <div className="h-8 w-px bg-white/10" />
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Beds</span>
-                          <span className="text-sm font-bold text-foreground">{plan.bedrooms}</span>
-                        </div>
-                        <div className="h-8 w-px bg-white/10" />
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Baths</span>
-                          <span className="text-sm font-bold text-foreground">{plan.bathrooms}</span>
-                        </div>
-                      </div>
 
-                      <div className="mt-8 flex items-center justify-between pt-6 border-t border-white/10">
-                        <p className="font-serif text-3xl font-bold text-accent">${plan.price.toLocaleString()}</p>
-                        <div className="h-12 w-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:bg-accent group-hover:text-white transition-all">
-                          <ArrowRight className="h-6 w-6" />
+                        <div className="mt-8 flex items-center justify-between pt-6 border-t border-white/10">
+                          <p className="font-serif text-3xl font-bold text-accent">${plan.price.toLocaleString()}</p>
+                          <div className="h-12 w-12 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center group-hover:bg-accent group-hover:text-white transition-all">
+                            <ArrowRight className="h-6 w-6" />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

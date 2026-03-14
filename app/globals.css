@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -133,4 +134,18 @@
 
 @utility glossy-card {
   @apply glass rounded-3xl p-6 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1;
+}
+
+@utility map-container {
+  & .leaflet-container {
+    @apply rounded-[2.5rem] border-4 border-white/10 shadow-2xl;
+    background: #0a0a0b;
+  }
+}
+
+@utility leaflet-v2-marker {
+  @apply flex items-center justify-center;
+  & div {
+    @apply h-8 w-8 rounded-full bg-primary border-4 border-white/50 shadow-[0_0_20px_var(--primary)] animate-pulse;
+  }
 }

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -10,17 +11,39 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Heart, Share2, Phone, Mail, MessageSquare, CheckCircle2, Building2, Sparkles, Send } from "lucide-react"
+import { Share2, Phone, Mail, MessageSquare, CheckCircle2, Building2, Sparkles, Send, Loader2 } from "lucide-react"
 import type { Property } from "@/lib/data"
 import { motion } from "framer-motion"
+import { useStartConversation } from "@/hooks/api/use-messages"
+import { toast } from "sonner"
+import { FavoriteButton } from "@/components/ui/favorite-button"
 
 interface PropertyContactProps {
   property: Property
 }
 
 export function PropertyContact({ property }: PropertyContactProps) {
-  const [liked, setLiked] = useState(false)
+  const router = useRouter()
   const [message, setMessage] = useState("")
+  const { mutate: startConversation, isPending } = useStartConversation()
+
+  const handleInquiry = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!message.trim() || isPending) return
+
+    startConversation({ 
+      receiverId: property.ownerId, 
+      initialMessage: `Inquiry about ${property.title}: ${message}` 
+    }, {
+      onSuccess: () => {
+        toast.success("Inquiry sent successfully!")
+        router.push("/dashboard/messages")
+      },
+      onError: (err: any) => {
+        toast.error(err.message || "Failed to send inquiry")
+      }
+    })
+  }
 
   return (
     <div className="space-y-8">
@@ -52,13 +75,7 @@ export function PropertyContact({ property }: PropertyContactProps) {
         </div>
 
         <div className="mt-6 flex gap-3 relative z-10">
-          <button
-            onClick={() => setLiked(!liked)}
-            className="flex-1 flex items-center justify-center gap-2 h-12 rounded-xl bg-white/5 border border-white/10 font-bold text-sm transition-all hover:bg-white/10"
-          >
-            <Heart className={`h-5 w-5 transition-all ${liked ? "fill-primary text-primary scale-110" : "text-foreground"}`} />
-            {liked ? "Saved" : "Save Property"}
-          </button>
+          <FavoriteButton propertyId={property.id} variant="full" />
           <button className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 border border-white/10 transition-all hover:bg-white/10">
             <Share2 className="h-5 w-5" />
           </button>
@@ -107,7 +124,7 @@ export function PropertyContact({ property }: PropertyContactProps) {
           Quick Inquiry
         </h3>
         
-        <div className="space-y-5">
+        <form onSubmit={handleInquiry} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="message" className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">Your Message</Label>
             <Textarea
@@ -119,14 +136,14 @@ export function PropertyContact({ property }: PropertyContactProps) {
               className="rounded-2xl bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 resize-none font-medium p-4"
             />
           </div>
-          <Button variant="glossy" className="w-full py-7 font-bold rounded-2xl gap-2 text-base">
-            <Send className="h-4 w-4" />
+          <Button type="submit" variant="glossy" className="w-full py-7 font-bold rounded-2xl gap-2 text-base" disabled={isPending}>
+            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             Submit Inquiry
           </Button>
           <p className="text-[10px] text-center text-muted-foreground/60 font-medium">
             By clicking submit, you agree to our Terms of Service and Privacy Policy.
           </p>
-        </div>
+        </form>
       </div>
 
       {/* Discovery Marketplace CTA */}

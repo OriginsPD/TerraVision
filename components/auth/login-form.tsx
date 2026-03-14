@@ -91,8 +91,8 @@ export function LoginForm() {
 
           <div className="space-y-2">
             <div className="flex items-center justify-between ml-1">
-              <Label htmlFor="password" university-title className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Password</Label>
-              <Link href="/forgot-password" university-title className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest">
+              <Label htmlFor="password" className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Password</Label>
+              <Link href="/forgot-password" className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest">
                 Forgot access?
               </Link>
             </div>

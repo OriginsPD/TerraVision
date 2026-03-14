@@ -5,18 +5,17 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { MapPin, Maximize2, Box, Heart, Grid3X3, List, Sparkles, ArrowUpRight } from "lucide-react"
+import { MapPin, Maximize2, Box, Grid3X3, List, Sparkles, ArrowUpRight } from "lucide-react"
 import type { Property } from "@/lib/data"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { FavoriteButton } from "@/components/ui/favorite-button"
 
 interface PropertyGridProps {
   properties: Property[]
 }
 
 function PropertyCard({ property, index, view }: { property: Property, index: number, view: "grid" | "list" }) {
-  const [liked, setLiked] = useState(false)
-
   const typeColors: Record<Property["type"] | string, string> = {
     land: "border-emerald-500/30 text-emerald-500 bg-emerald-500/10",
     waterfront: "border-blue-500/30 text-blue-500 bg-blue-500/10",
@@ -45,6 +44,8 @@ function PropertyCard({ property, index, view }: { property: Property, index: nu
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+          
+          <FavoriteButton propertyId={property.id} className="absolute right-4 top-4" />
         </div>
         
         <div className="flex-1 flex flex-col justify-between py-2">
@@ -130,15 +131,7 @@ function PropertyCard({ property, index, view }: { property: Property, index: nu
           </div>
 
           {/* Like Button */}
-          <button
-            onClick={(e) => {
-              e.preventDefault()
-              setLiked(!liked)
-            }}
-            className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 border border-white/30 backdrop-blur-md transition-all hover:bg-white/40 active:scale-90"
-          >
-            <Heart className={`h-5 w-5 transition-all ${liked ? "fill-primary text-primary" : "text-white"}`} />
-          </button>
+          <FavoriteButton propertyId={property.id} className="absolute right-4 top-4" />
 
           {/* View Details Hover Overlay */}
           <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 bg-black/20 backdrop-blur-[2px]">

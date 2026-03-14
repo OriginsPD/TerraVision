@@ -1,3 +1,6 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Compass, Twitter, Linkedin, Github, Mail, MapPin, Phone } from "lucide-react"
 
@@ -26,6 +29,12 @@ const footerLinks = {
 }
 
 export function Footer() {
+  const [year, setYear] = useState<number | null>(null)
+
+  useEffect(() => {
+    setYear(new Date().getFullYear())
+  }, [])
+
   return (
     <footer className="relative border-t border-white/10 bg-white/5 backdrop-blur-xl pt-24 pb-12 overflow-hidden">
       {/* Background Orbs */}
@@ -38,7 +47,7 @@ export function Footer() {
           <div className="lg:col-span-4 flex flex-col items-start">
             <Link href="/" className="flex items-center gap-3 group mb-8">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent shadow-lg transition-transform group-hover:scale-110">
-                <Compass className="h-6 w-6 text-white" />
+                < Compass className="h-6 w-6 text-white" />
               </div>
               <span className="font-serif text-2xl tracking-tight text-foreground font-bold">
                 Terra<span className="text-primary">Vision</span>
@@ -109,7 +118,7 @@ export function Footer() {
         {/* Bottom Section */}
         <div className="pt-12 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6">
           <p className="text-sm font-medium text-muted-foreground">
-            &copy; {new Date().getFullYear()} TerraVision. Built with passion for the future.
+            &copy; {year || 2026} TerraVision. Built with passion for the future.
           </p>
           
           <div className="flex items-center gap-4">
