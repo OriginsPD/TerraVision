@@ -15,13 +15,12 @@ export function BuyerOverview({ user }: { user: User }) {
   const savedProperties = properties.slice(0, 2)
   const { data: analytics, isLoading } = useAnalytics()
 
-  const iconMap: Record<string, any> = {
-    "Properties Saved": Heart,
-    "My Library": ShoppingBag,
-    "Active Chats": MessageSquare,
-    "Architects Hired": Star,
-    "Virtual Tours": Box
-  }
+  const stats = [
+    { label: "Market Listings", value: analytics?.overview.totalProperties?.toString() || "0", change: "+14%", trend: "up", icon: Compass },
+    { label: "Community Members", value: analytics?.overview.totalUsers?.toString() || "0", change: "+8%", trend: "up", icon: Star },
+    { label: "Active Conversations", value: analytics?.overview.totalConversations?.toString() || "0", change: "+5", trend: "up", icon: MessageSquare },
+    { label: "Available Value", value: analytics?.overview.totalValuation ? `$${(analytics.overview.totalValuation / 1000000).toFixed(1)}M` : "$0", change: "+12%", trend: "up", icon: Box },
+  ]
 
   return (
     <div className="p-6 lg:p-10 space-y-10">
@@ -37,7 +36,7 @@ export function BuyerOverview({ user }: { user: User }) {
         <Button variant="glossy" asChild className="rounded-2xl px-8 py-7 font-bold text-lg shadow-xl shadow-primary/20">
           <Link href="/properties">
             <Compass className="h-5 w-5 mr-2" />
-            Discover Land
+            Discover Properties
           </Link>
         </Button>
       </div>
@@ -48,8 +47,8 @@ export function BuyerOverview({ user }: { user: User }) {
             <div key={i} className="h-40 rounded-[2rem] bg-white/5 animate-pulse" />
           ))
         ) : (
-          analytics?.stats.map((stat, i) => {
-            const Icon = iconMap[stat.label] || Heart
+          stats.map((stat, i) => {
+            const Icon = stat.icon
             return (
               <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                 <Card className="glass border-white/10 hover:border-white/30 transition-all hover:shadow-2xl group overflow-hidden rounded-[2rem]">

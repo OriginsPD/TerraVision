@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { User as UserIcon, Bell, Shield, CreditCard, Globe, Palette, Loader2 } from "lucide-react"
+import { User as UserIcon, Bell, Shield, CreditCard, Globe, Palette, Loader2, Briefcase } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,11 +11,101 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
 import { useUser, useUpdateUser } from "@/hooks/api/use-user"
+import { useMyProfessionalProfile, useUpdateProfessional } from "@/hooks/api/use-professionals"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { profileSchema, type ProfileFormValues } from "@/lib/validations"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+
+function ProfessionalProfileForm() {
+  const { data: profile, isLoading } = useMyProfessionalProfile()
+  const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfessional()
+  
+  const [formData, setFormData] = useState({
+    bio: "",
+    hourlyRate: 0,
+    portfolioUrl: "",
+    specialty: "",
+  })
+
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        bio: profile.bio || "",
+        hourlyRate: profile.hourlyRate || 0,
+        portfolioUrl: profile.portfolioUrl || "",
+        specialty: profile.specialty || "",
+      })
+    }
+  }, [profile])
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    updateProfile(formData)
+  }
+
+  if (isLoading) return <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-primary" /></div>
+
+  return (
+    <Card className="border-border bg-card">
+      <CardHeader>
+        <CardTitle className="font-serif text-lg text-foreground">Professional Details</CardTitle>
+        <CardDescription>Manage your expert profile visible to clients</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label>Bio / About You</Label>
+            <Textarea 
+              value={formData.bio} 
+              onChange={e => setFormData({...formData, bio: e.target.value})}
+              placeholder="Tell clients about your expertise..."
+              className="bg-input border-border min-h-[120px]"
+            />
+          </div>
+          
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Hourly Rate ($)</Label>
+              <Input 
+                type="number" 
+                value={formData.hourlyRate} 
+                onChange={e => setFormData({...formData, hourlyRate: parseFloat(e.target.value)})}
+                className="bg-input border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Specialty</Label>
+              <Input 
+                value={formData.specialty} 
+                onChange={e => setFormData({...formData, specialty: e.target.value})}
+                placeholder="e.g. Sustainable Modernism"
+                className="bg-input border-border"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Portfolio URL</Label>
+            <Input 
+              value={formData.portfolioUrl} 
+              onChange={e => setFormData({...formData, portfolioUrl: e.target.value})}
+              placeholder="https://..."
+              className="bg-input border-border"
+            />
+          </div>
+
+          <Button type="submit" disabled={isUpdating} className="bg-accent text-accent-foreground hover:bg-accent/90">
+            {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Update Professional Profile
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  )
+}
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile")
@@ -23,8 +113,6 @@ export default function SettingsPage() {
   const { mutate: updateUser, isPending: isUpdating } = useUpdateUser()
 
   const nameParts = (user?.full_name ?? "").split(" ")
-  const firstName = nameParts[0] ?? ""
-  const lastName = nameParts.slice(1).join(" ") || ""
   const initials = nameParts.map((n) => n[0]).join("").toUpperCase().slice(0, 2)
 
   const form = useForm<ProfileFormValues>({
@@ -80,6 +168,12 @@ export default function SettingsPage() {
             <CreditCard className="h-4 w-4" />
             Billing
           </TabsTrigger>
+          {user?.role && ["ARCHITECT", "MASON", "CARPENTER", "CONTRACTOR"].includes(user.role.toUpperCase()) && (
+            <TabsTrigger value="professional" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground flex items-center gap-2">
+              <Briefcase className="h-4 w-4" />
+              Professional Profile
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="profile">
@@ -406,8 +500,41 @@ export default function SettingsPage() {
             </Card>
           </div>
         </TabsContent>
+
+        <TabsContent value="professional">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ProfessionalProfileForm />
+            <Card className="border-border bg-card">
+              <CardHeader>
+                <CardTitle className="font-serif text-lg text-foreground">Stats & Verification</CardTitle>
+                <CardDescription>Your performance on TerraVision</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                 <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/20 border border-border">
+                    <div>
+                       <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Verification Status</p>
+                       <p className="font-bold text-emerald-500 flex items-center gap-2 mt-1">
+                          <Shield className="h-4 w-4" /> Verified Expert
+                       </p>
+                    </div>
+                    <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Active</Badge>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-secondary/10 border border-border">
+                       <p className="text-[10px] font-bold text-muted-foreground uppercase">Completed Projects</p>
+                       <p className="text-2xl font-serif font-bold mt-1">28</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-secondary/10 border border-border">
+                       <p className="text-[10px] font-bold text-muted-foreground uppercase">Response Rate</p>
+                       <p className="text-2xl font-serif font-bold mt-1">98%</p>
+                    </div>
+                 </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   )
 }
-

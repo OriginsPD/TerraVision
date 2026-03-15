@@ -42,6 +42,20 @@ export function useProfessionals() {
   })
 }
 
+export function useMyProfessionalProfile() {
+  return useQuery({
+    queryKey: ["professionals", "me"],
+    queryFn: async () => {
+      try {
+        const data = (await apiClient.get("/professionals/me")) as any
+        return mapBackendProfessional(data)
+      } catch (e) {
+        return null
+      }
+    },
+  })
+}
+
 export function useProfessional(id: string) {
   return useQuery({
     queryKey: ["professionals", id],
@@ -52,3 +66,23 @@ export function useProfessional(id: string) {
     enabled: !!id,
   })
 }
+
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+
+export function useUpdateProfessional() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (data: any) => {
+      return apiClient.put("/professionals/me", data)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["professionals", "me"] })
+      toast.success("Professional profile updated successfully")
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update professional profile")
+    },
+  })
+}
+

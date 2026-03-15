@@ -13,18 +13,17 @@ import { cn } from "@/lib/utils"
 export function ExpertOverview({ user }: { user: User }) {
   const { data: analytics, isLoading } = useAnalytics()
   
+  const stats = [
+    { label: "Profile Reach", value: analytics?.overview.totalUsers?.toString() || "0", change: "+12%", trend: "up", icon: Users },
+    { label: "Active Inquiries", value: analytics?.overview.totalConversations?.toString() || "0", change: "+5", trend: "up", icon: MessageSquare },
+    { label: "Market Listings", value: analytics?.overview.totalProperties?.toString() || "0", change: "Stable", trend: "neutral", icon: LayoutGrid },
+    { label: "Platform Value", value: analytics?.overview.totalValuation ? `$${(analytics.overview.totalValuation / 1000000).toFixed(1)}M` : "$0", change: "+18%", trend: "up", icon: Zap },
+  ]
+
   const recentLeads = [
     { name: "John Smith", project: "Eco-Home Design", budget: "$5k - $10k", time: "2h ago", status: "New" },
     { name: "Alice Brown", project: "Terrain Analysis", budget: "$2k - $4k", time: "5h ago", status: "Pending" },
   ]
-
-  const iconMap: Record<string, any> = {
-    "Profile Reach": Users,
-    "New Bookings": Sparkles,
-    "Avg. Rating": Star,
-    "Total Earned": Zap,
-    "Active Projects": Briefcase
-  }
 
   return (
     <div className="p-6 lg:p-10 space-y-10">
@@ -38,7 +37,7 @@ export function ExpertOverview({ user }: { user: User }) {
           <p className="text-lg font-medium text-muted-foreground/80">Manage your portfolio and track your client pipeline.</p>
         </div>
         <Button variant="glossy" asChild className="rounded-2xl px-8 py-7 font-bold text-lg shadow-xl shadow-primary/20 border-accent/30">
-          <Link href="/dashboard/portfolio">
+          <Link href="/dashboard/settings">
             <LayoutGrid className="h-5 w-5 mr-2" />
             Update Portfolio
           </Link>
@@ -51,8 +50,8 @@ export function ExpertOverview({ user }: { user: User }) {
             <div key={i} className="h-40 rounded-[2rem] bg-white/5 animate-pulse" />
           ))
         ) : (
-          analytics?.stats.map((stat, i) => {
-            const Icon = iconMap[stat.label] || Award
+          stats.map((stat, i) => {
+            const Icon = stat.icon
             return (
               <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                 <Card className="glass border-white/10 hover:border-white/30 transition-all hover:shadow-2xl group overflow-hidden rounded-[2rem]">
@@ -62,7 +61,7 @@ export function ExpertOverview({ user }: { user: User }) {
                         <Icon className={cn("h-7 w-7", i % 2 === 0 ? "text-primary" : "text-accent")} />
                       </div>
                       <div className="flex flex-col items-end">
-                        <div className={cn("flex items-center gap-1 font-bold text-xs", stat.trend === 'up' ? "text-emerald-500" : "text-muted-foreground")}>
+                        <div className={cn("flex items-center gap-1 font-bold text-xs", stat.trend === 'up' ? "text-emerald-500" : stat.trend === 'down' ? "text-rose-500" : "text-muted-foreground")}>
                           {stat.trend === 'up' ? <TrendingUp className="h-3 w-3" /> : stat.trend === 'down' ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
                           <span>{stat.change}</span>
                         </div>

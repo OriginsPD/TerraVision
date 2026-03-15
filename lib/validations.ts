@@ -6,6 +6,8 @@ export const propertyFormSchema = z.object({
   location: z.string().min(3, "Location must be at least 3 characters."),
   price: z.coerce.number().positive("Price must be a positive number.").min(100, "Price is too low."),
   land_size: z.coerce.number().positive("Land size must be positive."),
+  type: z.enum(["HOUSE", "VILLA", "APARTMENT", "LAND", "CHALET", "TOWNHOME", "PENTHOUSE", "STUDIO"]).default("HOUSE"),
+  amenities: z.array(z.string()).default([]),
 })
 
 export type PropertyFormValues = z.infer<typeof propertyFormSchema>

@@ -19,6 +19,13 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { propertyFormSchema, type PropertyFormValues } from "@/lib/validations"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+
+const AMENITIES_OPTIONS = [
+  "Pool", "Smart Home", "Home Theater", "Gym", "Guest House", 
+  "Solar Panels", "Sustainable Design", "Beach Access", "Wine Cellar"
+]
 
 export default function NewPropertyPage() {
   const router = useRouter()
@@ -32,6 +39,8 @@ export default function NewPropertyPage() {
       location: "",
       price: 0,
       land_size: 0,
+      type: "HOUSE",
+      amenities: [],
     },
   })
 
@@ -65,6 +74,16 @@ export default function NewPropertyPage() {
     data.append("location", values.location)
     data.append("price", values.price.toString())
     data.append("land_size", values.land_size.toString())
+    data.append("type", values.type || "HOUSE")
+    
+    if (values.amenities && values.amenities.length > 0) {
+      values.amenities.forEach(a => data.append("amenities", a))
+    }
+
+    // Mock geocoding coordinates for simulation
+    data.append("latitude", (34 + Math.random() * 2).toString())
+    data.append("longitude", (-118 + Math.random() * 2).toString())
+
     data.append("image", files.main)
     
     if (files.front) data.append("image_front", files.front)
@@ -164,7 +183,33 @@ export default function NewPropertyPage() {
                     )}
                   />
 
-                  <div className="grid gap-6 sm:grid-cols-2">
+                  <div className="grid gap-6 sm:grid-cols-3">
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">Property Type</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-14 rounded-2xl bg-white/5 border-white/10 focus:border-primary/50 transition-all font-medium">
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="bg-popover border-white/10">
+                              <SelectItem value="HOUSE">House</SelectItem>
+                              <SelectItem value="VILLA">Villa</SelectItem>
+                              <SelectItem value="APARTMENT">Apartment</SelectItem>
+                              <SelectItem value="CHALET">Chalet</SelectItem>
+                              <SelectItem value="PENTHOUSE">Penthouse</SelectItem>
+                              <SelectItem value="LAND">Land</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <FormField
                       control={form.control}
                       name="price"
@@ -250,6 +295,45 @@ export default function NewPropertyPage() {
                       </FormItem>
                     )}
                   />
+
+                  <div className="space-y-4">
+                    <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">Amenities</Label>
+                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                      {AMENITIES_OPTIONS.map((amenity) => (
+                        <FormField
+                          key={amenity}
+                          control={form.control}
+                          name="amenities"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={amenity}
+                                className="flex flex-row items-start space-x-3 space-y-0 rounded-xl border border-white/5 bg-white/5 p-4 hover:bg-white/10 transition-colors"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(amenity)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...(field.value || []), amenity])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== amenity
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-medium leading-none cursor-pointer">
+                                  {amenity}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 

@@ -118,9 +118,11 @@ export default function MyPropertiesPage() {
                             View Listing
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="flex items-center gap-2">
-                          <Edit className="h-4 w-4" />
-                          Edit Property
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/my-properties/${property.id}/edit`} className="flex items-center gap-2">
+                            <Edit className="h-4 w-4" />
+                            Edit Property
+                          </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem className="flex items-center gap-2 text-destructive">
                           <Trash2 className="h-4 w-4" />

@@ -4,21 +4,35 @@ import { useQuery } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api-client"
 
 export interface AnalyticsData {
-  stats: {
-    label: string
-    value: string
-    change: string
-    trend: "up" | "down" | "neutral"
-    icon?: string
+  overview: {
+    totalProperties: number
+    totalUsers: number
+    totalConversations: number
+    totalValuation: number
+    averagePrice: number
+  }
+  typeDistribution: {
+    type: string
+    count: number
   }[]
-  chartData?: { name: string, value: number }[]
+  topProperties: {
+    id: number
+    title: string
+    views: number
+    price: number
+    location: string
+  }[]
+  ownerStats: {
+    myProperties: number
+    myMessages: number
+  } | null
 }
 
 export function useAnalytics() {
   return useQuery<AnalyticsData>({
-    queryKey: ["analytics", "overview"],
+    queryKey: ["analytics"],
     queryFn: async () => {
-      return apiClient.get("/analytics/overview") as Promise<AnalyticsData>
+      return apiClient.get("/analytics") as Promise<AnalyticsData>
     },
   })
 }

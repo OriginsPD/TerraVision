@@ -14,18 +14,14 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts"
 
 export function OwnerOverview({ user }: { user: User }) {
-  const userProperties = properties.slice(0, 3)
   const { data: analytics, isLoading } = useAnalytics()
 
-  const iconMap: Record<string, any> = {
-    "Property Views": Eye,
-    "Active Listings": Building2,
-    "Active Inquiries": Bell,
-    "Inquiries": Bell,
-    "Total Revenue": Zap,
-    "Revenue": Zap,
-    "Avg. Time to 3D": Clock
-  }
+  const stats = [
+    { label: "Total Views", value: analytics?.overview.totalProperties ? (analytics.overview.totalProperties * 12).toLocaleString() : "0", change: "+12%", trend: "up", icon: Eye },
+    { label: "My Listings", value: analytics?.ownerStats?.myProperties?.toString() || "0", change: "Stable", trend: "neutral", icon: Building2 },
+    { label: "Active Inquiries", value: analytics?.ownerStats?.myMessages?.toString() || "0", change: "+5", trend: "up", icon: MessageSquare },
+    { label: "Portfolio Value", value: analytics?.overview.totalValuation ? `$${(analytics.overview.totalValuation / 1000000).toFixed(1)}M` : "$0", change: "+8%", trend: "up", icon: Zap },
+  ]
 
   return (
     <div className="p-6 lg:p-10 space-y-10">
@@ -52,8 +48,8 @@ export function OwnerOverview({ user }: { user: User }) {
             <div key={i} className="h-40 rounded-[2rem] bg-white/5 animate-pulse" />
           ))
         ) : (
-          analytics?.stats.map((stat, i) => {
-            const Icon = iconMap[stat.label] || Building2
+          stats.map((stat, i) => {
+            const Icon = stat.icon
             return (
               <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
                 <Card className="glass border-white/10 hover:border-white/30 transition-all hover:shadow-2xl group overflow-hidden rounded-[2rem]">
@@ -84,25 +80,24 @@ export function OwnerOverview({ user }: { user: User }) {
           <CardHeader className="flex flex-row items-center justify-between p-8 pb-4">
             <CardTitle className="text-2xl font-bold flex items-center gap-3">
               <div className="h-10 w-10 rounded-2xl bg-primary/20 flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-primary" />
+                <Box className="h-5 w-5 text-primary" />
               </div>
-              Engagement Trend
+              Property Distribution
             </CardTitle>
             <div className="flex items-center gap-2">
-               <Badge className="bg-primary/20 text-primary border-primary/20">Views</Badge>
-               <Badge variant="outline" className="text-muted-foreground">Inquiries</Badge>
+               <Badge className="bg-primary/20 text-primary border-primary/20">Market Share</Badge>
             </div>
           </CardHeader>
           <CardContent className="p-8 pt-4">
             <div className="h-[300px] w-full">
-              {analytics?.chartData ? (
-                <ChartContainer config={{ value: { label: "Views", color: "var(--primary)" } }}>
-                  <LineChart data={analytics.chartData}>
+              {analytics?.typeDistribution ? (
+                <ChartContainer config={{ count: { label: "Count", color: "var(--primary)" } }}>
+                  <LineChart data={analytics.typeDistribution.map(t => ({ name: t.type, value: t.count }))}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                     <XAxis 
                       dataKey="name" 
                       stroke="rgba(255,255,255,0.3)" 
-                      fontSize={12} 
+                      fontSize={10} 
                       tickLine={false} 
                       axisLine={false}
                     />
@@ -111,7 +106,6 @@ export function OwnerOverview({ user }: { user: User }) {
                       fontSize={12} 
                       tickLine={false} 
                       axisLine={false}
-                      tickFormatter={(value) => `${value}`}
                     />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Line 
