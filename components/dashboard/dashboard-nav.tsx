@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -32,6 +33,7 @@ import {
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { useUser, UserRole } from "@/hooks/api/use-user"
+import { logout } from "@/lib/auth"
 
 const navItemsByRole: Record<UserRole, any[]> = {
   buyer: [
@@ -167,7 +169,10 @@ export function DashboardNav() {
                 </DropdownMenuItem>
               </div>
               <DropdownMenuSeparator className="bg-white/10 mx-2" />
-              <DropdownMenuItem className="text-rose-500 rounded-xl p-3 font-bold focus:bg-rose-500/10 focus:text-rose-500 cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => logout()}
+                className="text-rose-500 rounded-xl p-3 font-bold focus:bg-rose-500/10 focus:text-rose-500 cursor-pointer"
+              >
                 <LogOut className="mr-3 h-4 w-4" />
                 Sign Out
               </DropdownMenuItem>

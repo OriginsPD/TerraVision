@@ -7,10 +7,12 @@ import { OwnerOverview } from "@/components/dashboard/owner-overview"
 import { ExpertOverview } from "@/components/dashboard/expert-overview"
 import { motion, AnimatePresence } from "framer-motion"
 
+export const dynamic = "force-dynamic"
+
 export default function DashboardPage() {
   const { data: user, isLoading } = useUser()
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-20 min-h-[60vh]">
         <Spinner className="h-12 w-12 text-primary" />

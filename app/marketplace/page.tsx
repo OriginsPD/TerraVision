@@ -136,7 +136,7 @@ export default function MarketplacePage() {
           ) : (
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {featuredProfessionals.map((pro, index) => {
-                const name = pro.user?.full_name || "Professional";
+                const name = (pro as any).name || (pro as any).user?.full_name || "Professional";
                 return (
                   <motion.div
                     key={pro.id}
@@ -173,7 +173,7 @@ export default function MarketplacePage() {
 
                         <div className="mt-8 pt-6 border-t border-white/10">
                           <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">
-                            Rate: <span className="text-lg text-foreground ml-1">${pro.hourly_rate}/hr</span>
+                            Rate: <span className="text-lg text-foreground ml-1">${pro.hourlyRate}/hr</span>
                           </p>
                         </div>
                       </div>

@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  BUYER      @map("BUYER")
+  OWNER      @map("OWNER")
+  ARCHITECT  @map("ARCHITECT")
+  MASON      @map("MASON")
+  CARPENTER  @map("CARPENTER")
+  CONTRACTOR @map("CONTRACTOR")
+  ADMIN      @map("ADMIN")
+
+  @@map("userrole")
+}
+
+model User {
+  id             String         @id @db.VarChar
+  email          String         @unique(map: "ix_user_email") @db.VarChar
+  firstName      String?        @map("first_name") @db.VarChar
+  lastName       String?        @map("last_name") @db.VarChar
+  email_verified Boolean?
+  image          String?        @db.VarChar
+  role           UserRole?
+  isActive       Boolean?       @map("is_active")
+  createdAt      DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime?      @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  accounts       Account[]
+  sessions       Session[]
+  properties     Property[]
+  professional   Professional?
+  favorites      Favorite[]
+  sentMessages   Message[]      @relation("sender")
+  conversations1 Conversation[] @relation("user1")
+  conversations2 Conversation[] @relation("user2")
+
+  @@map("user")
+}
+
+model Account {
+  id                       String    @id @db.VarChar
+  account_id               String    @db.VarChar
+  provider_id              String    @db.VarChar
+  userId                   String    @map("user_id") @db.VarChar
+  access_token             String?
+  refresh_token            String?
+  id_token                 String?
+  access_token_expires_at  DateTime? @db.Timestamptz(6)
+  refresh_token_expires_at DateTime? @db.Timestamptz(6)
+  scope                    String?
+  password                 String?
+  created_at               DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime? @default(now()) @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("account")
+}
+
+model Session {
+  id         String    @id @db.VarChar
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  token      String    @unique @db.VarChar
+  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+  ip_address String?   @db.VarChar
+  user_agent String?   @db.VarChar
+  userId     String    @map("user_id") @db.VarChar
+
+  user User @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("session")
+}
+
+model Property {
+  id               Int        @id @default(autoincrement())
+  ownerId          String     @map("owner_id") @db.VarChar
+  title            String?    @db.VarChar
+  description      String?    @db.VarChar
+  location         String?    @db.VarChar
+  price            Float?
+  landSize         Float?     @map("land_size")
+  imageUrl         String?    @map("image_url") @db.VarChar
+  model_3d_url     String?    @db.VarChar
+  isModelGenerated Boolean?   @map("is_model_generated")
+  createdAt        DateTime?  @default(now()) @map("created_at") @db.Timestamp(6)
+
+  owner     User       @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  favorites Favorite[]
+
+  @@index([id], map: "ix_properties_id")
+  @@index([title], map: "ix_properties_title")
+  @@map("properties")
+}
+
+model Professional {
+  id           Int         @id @default(autoincrement())
+  userId       String      @unique @map("user_id") @db.VarChar
+  profession   String?     @db.VarChar
+  bio          String?
+  portfolioUrl String?     @map("portfolio_url") @db.VarChar
+  hourlyRate   Float?      @map("hourly_rate")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  floor_plans FloorPlan[]
+
+  @@index([id], map: "ix_professionals_id")
+  @@map("professionals")
+}
+
+model Favorite {
+  id         Int       @id @default(autoincrement())
+  userId     String    @map("user_id") @db.VarChar
+  propertyId Int       @map("property_id")
+  createdAt  DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([id], map: "ix_favorites_id")
+  @@map("favorites")
+}
+
+model Conversation {
+  id        Int       @id @default(autoincrement())
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+  user1Id   String    @map("user1_id") @db.VarChar
+  user2Id   String    @map("user2_id") @db.VarChar
+
+  user1    User      @relation("user1", fields: [user1Id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user2    User      @relation("user2", fields: [user2Id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  messages Message[]
+
+  @@index([id], map: "ix_conversations_id")
+  @@map("conversations")
+}
+
+model Message {
+  id             Int       @id @default(autoincrement())
+  conversationId Int       @map("conversation_id")
+  senderId       String    @map("sender_id") @db.VarChar
+  content        String
+  is_read        Boolean?
+  createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sender       User         @relation("sender", fields: [senderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([id], map: "ix_messages_id")
+  @@map("messages")
+}
+
+model FloorPlan {
+  id              Int       @id @default(autoincrement())
+  professional_id Int
+  title           String?   @db.VarChar
+  description     String?
+  price           Float?
+  sqft            Int?
+  bedrooms        Int?
+  bathrooms       Float?
+  style           String?   @db.VarChar
+  imageUrl        String?   @map("image_url") @db.VarChar
+  file_url        String?   @db.VarChar
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
+
+  professional Professional @relation(fields: [professional_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([id], map: "ix_floor_plans_id")
+  @@index([title], map: "ix_floor_plans_title")
+  @@map("floor_plans")
+}

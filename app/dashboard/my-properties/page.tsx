@@ -23,7 +23,8 @@ export default function MyPropertiesPage() {
     async function fetchMyProperties() {
       try {
         setIsLoading(true)
-        const allProperties = await apiClient.get("/properties/")
+        const res = (await apiClient.get("/properties/")) as any
+        const allProperties: any[] = res?.properties ?? (Array.isArray(res) ? res : [])
         setMyProperties(allProperties)
       } catch (error) {
         console.error("Failed to fetch properties", error)

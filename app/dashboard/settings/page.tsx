@@ -11,9 +11,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { useUser } from "@/hooks/api/use-user"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile")
+  const { data: user } = useUser()
+
+  const nameParts = (user?.full_name ?? "John Doe").split(" ")
+  const firstName = nameParts[0] ?? ""
+  const lastName = nameParts.slice(1).join(" ") || ""
+  const initials = nameParts.map((n) => n[0]).join("").toUpperCase().slice(0, 2)
 
   return (
     <div className="space-y-8">
@@ -54,7 +61,7 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-4">
                   <Avatar className="h-20 w-20">
                     <AvatarImage src="/avatar.jpg" alt="Profile" />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xl">JD</AvatarFallback>
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xl">{initials}</AvatarFallback>
                   </Avatar>
                   <div>
                     <Button variant="outline" className="border-border text-foreground hover:bg-secondary">
@@ -67,17 +74,17 @@ export default function SettingsPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="firstName" className="text-foreground">First Name</Label>
-                    <Input id="firstName" defaultValue="John" className="bg-input border-border text-foreground" />
+                    <Input id="firstName" defaultValue={firstName} className="bg-input border-border text-foreground" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName" className="text-foreground">Last Name</Label>
-                    <Input id="lastName" defaultValue="Doe" className="bg-input border-border text-foreground" />
+                    <Input id="lastName" defaultValue={lastName} className="bg-input border-border text-foreground" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-foreground">Email</Label>
-                  <Input id="email" type="email" defaultValue="john@example.com" className="bg-input border-border text-foreground" />
+                  <Input id="email" type="email" defaultValue={user?.email ?? ""} className="bg-input border-border text-foreground" />
                 </div>
 
                 <div className="space-y-2">

@@ -17,23 +17,24 @@ export default function ProfessionalsPage() {
     async function fetchProfessionals() {
       try {
         setIsLoading(true)
-        const data = await apiClient.get("/professionals/")
-        
-        const mapped: Professional[] = data.map((p: any) => ({
-          id: p.id.toString(),
-          name: p.user?.full_name || "Professional",
-          email: p.user?.email || "",
+        const res = (await apiClient.get("/professionals/")) as any
+        const list: any[] = Array.isArray(res) ? res : res?.professionals ?? []
+
+        const mapped: Professional[] = list.map((p: any) => ({
+          id: p.id?.toString() ?? "",
+          name: p.name || p.user?.full_name || p.user?.firstName || "Professional",
+          email: p.email || p.user?.email || "",
           profession: p.profession,
-          specialty: p.profession.charAt(0).toUpperCase() + p.profession.slice(1),
+          specialty: p.specialty || p.bio || p.profession,
           bio: p.bio || "",
-          location: "Not specified",
-          rating: 4.5,
-          reviewCount: 10,
-          hourlyRate: p.hourly_rate || 0,
-          completedProjects: 5,
-          portfolioUrl: p.portfolio_url,
-          verified: true,
-          avatar: undefined,
+          location: p.location || "Not specified",
+          rating: p.rating ?? 4.5,
+          reviewCount: p.reviewCount ?? p.review_count ?? 10,
+          hourlyRate: p.hourlyRate ?? p.hourly_rate ?? 0,
+          completedProjects: p.completedProjects ?? p.completed_projects ?? 5,
+          portfolioUrl: p.portfolioUrl ?? p.portfolio_url ?? null,
+          verified: p.verified ?? true,
+          avatar: p.avatar,
         }))
         
         setProfessionals(mapped)
