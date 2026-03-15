@@ -25,9 +25,11 @@ function PropertyCard({ property, index, view }: { property: Property, index: nu
     rural: "border-emerald-500/30 text-emerald-500 bg-emerald-500/10",
   }
 
-  const imageUrl = property.images[0]?.startsWith('http') || property.images[0]?.startsWith('/')
-    ? property.images[0] 
-    : property.images[0];
+  const imageUrl = property.images[0]
+    ? (property.images[0].startsWith('http') || property.images[0].startsWith('/') 
+        ? property.images[0] 
+        : `/${property.images[0]}`)
+    : "/placeholder.jpg";
 
   if (view === "list") {
     return (

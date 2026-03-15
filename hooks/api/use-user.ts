@@ -1,8 +1,9 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api-client"
 import { getAccessToken } from "@/lib/auth"
+import { toast } from "sonner"
 
 // Backend roles
 export type BackendRole =
@@ -68,5 +69,22 @@ export function useUser() {
     enabled: typeof window !== "undefined" && !!getAccessToken(),
     staleTime: 5 * 60 * 1000,
     retry: false,
+  })
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (values: { firstName?: string; lastName?: string; email?: string; phone?: string }) => {
+      return apiClient.put("/auth/me", values)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user", "me"] })
+      toast.success("Profile updated successfully")
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update profile")
+    },
   })
 }

@@ -18,22 +18,22 @@ export const mapBackendProperty = (p: any): Property => ({
   size: p.landSize ?? p.land_size ?? 0,
   sizeUnit: "acres",
   type: "land",
-  status: "available",
-  has3D: !!p.is_model_generated,
-  model3DUrl: p.model_3d_url ?? null,
-  generationStatus: p.is_model_generated
+  status: p.status || "available",
+  has3D: !!(p.model_3d_url || p.model_url),
+  model3DUrl: p.model_3d_url || p.model_url || null,
+  generationStatus: (p.model_3d_url || p.model_url)
     ? "completed"
-    : p.model_3d_url
+    : (p.is_model_generated === false && p.model_3d_url === null)
+    ? "failed"
+    : (p.generation_status === "pending")
     ? "pending"
     : "none",
-  images: p.image_url
-    ? [p.image_url, ...(p.images?.map((img: any) => img.url) ?? [])]
-    : (p.images?.map((img: any) => img.url) ?? []),
-  features: [],
+  images: p.images || [],
+  features: p.features || [],
   ownerId: p.owner_id?.toString() ?? "",
   ownerName: "Owner",
   createdAt: p.created_at ?? new Date().toISOString(),
-  featured: false,
+  featured: !!p.featured,
 })
 
 export function useProperties() {
@@ -53,10 +53,12 @@ export function useProperty(id: string) {
   return useQuery({
     queryKey: ["properties", id],
     queryFn: async () => {
-      // GET /properties/{id} -> BaseResponse { data: PropertyOut }
-      // api-client unwraps -> PropertyOut directly
+      // GET /properties/{id} -> BaseResponse { data: { property: PropertyOut } }
+      // api-client unwraps -> { property: PropertyOut }
       const data = (await apiClient.get(`/properties/${id}`)) as any
-      return mapBackendProperty(data)
+      // Extract the nested property object
+      const propertyData = data?.property ?? data
+      return mapBackendProperty(propertyData)
     },
     enabled: !!id,
     // Poll every 5 seconds while 3D model is still being generated

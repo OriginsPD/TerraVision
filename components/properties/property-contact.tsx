@@ -1,12 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -17,6 +13,11 @@ import { motion } from "framer-motion"
 import { useStartConversation } from "@/hooks/api/use-messages"
 import { toast } from "sonner"
 import { FavoriteButton } from "@/components/ui/favorite-button"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { inquirySchema, type InquiryFormValues } from "@/lib/validations"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import Link from "next/link"
 
 interface PropertyContactProps {
   property: Property
@@ -24,16 +25,21 @@ interface PropertyContactProps {
 
 export function PropertyContact({ property }: PropertyContactProps) {
   const router = useRouter()
-  const [message, setMessage] = useState("")
   const { mutate: startConversation, isPending } = useStartConversation()
 
-  const handleInquiry = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!message.trim() || isPending) return
+  const form = useForm<InquiryFormValues>({
+    resolver: zodResolver(inquirySchema),
+    defaultValues: {
+      message: "",
+    },
+  })
+
+  const onSubmit = (values: InquiryFormValues) => {
+    if (isPending) return
 
     startConversation({ 
       receiverId: property.ownerId, 
-      initialMessage: `Inquiry about ${property.title}: ${message}` 
+      initialMessage: `Inquiry about ${property.title}: ${values.message}` 
     }, {
       onSuccess: () => {
         toast.success("Inquiry sent successfully!")
@@ -124,26 +130,35 @@ export function PropertyContact({ property }: PropertyContactProps) {
           Quick Inquiry
         </h3>
         
-        <form onSubmit={handleInquiry} className="space-y-5">
-          <div className="space-y-2">
-            <Label htmlFor="message" className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">Your Message</Label>
-            <Textarea
-              id="message"
-              placeholder="Tell us about your interests..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={4}
-              className="rounded-2xl bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 resize-none font-medium p-4"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <FormField
+              control={form.control}
+              name="message"
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <FormLabel className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-1">Your Message</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Tell us about your interests..."
+                      rows={4}
+                      className="rounded-2xl bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 resize-none font-medium p-4"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <Button type="submit" variant="glossy" className="w-full py-7 font-bold rounded-2xl gap-2 text-base" disabled={isPending}>
-            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Submit Inquiry
-          </Button>
-          <p className="text-[10px] text-center text-muted-foreground/60 font-medium">
-            By clicking submit, you agree to our Terms of Service and Privacy Policy.
-          </p>
-        </form>
+            <Button type="submit" variant="glossy" className="w-full py-7 font-bold rounded-2xl gap-2 text-base" disabled={isPending}>
+              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Submit Inquiry
+            </Button>
+            <p className="text-[10px] text-center text-muted-foreground/60 font-medium">
+              By clicking submit, you agree to our Terms of Service and Privacy Policy.
+            </p>
+          </form>
+        </Form>
       </div>
 
       {/* Discovery Marketplace CTA */}

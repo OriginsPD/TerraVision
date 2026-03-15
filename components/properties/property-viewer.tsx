@@ -26,16 +26,23 @@ interface PropertyViewerProps {
 }
 
 function Model({ url }: { url: string }) {
-  const { scene } = useGLTF(url)
-  scene.traverse((child) => {
-    if ((child as THREE.Mesh).isMesh) {
-      const mesh = child as THREE.Mesh
-      if (mesh.material) {
-        ;(mesh.material as THREE.MeshStandardMaterial).envMapIntensity = 1.5
-      }
+  console.log("[PropertyViewer] Loading 3D Model from:", url);
+  const { scene } = useGLTF(url);
+  
+  useEffect(() => {
+    if (scene) {
+      scene.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          if (mesh.material && "envMapIntensity" in mesh.material) {
+            (mesh.material as THREE.MeshStandardMaterial).envMapIntensity = 1.5;
+          }
+        }
+      });
     }
-  })
-  return <primitive object={scene} />
+  }, [scene]);
+
+  return <primitive object={scene} />;
 }
 
 function Player({ joystickData, active }: { joystickData: { x: number, y: number } | null, active: boolean }) {
@@ -99,7 +106,7 @@ function Player({ joystickData, active }: { joystickData: { x: number, y: number
 
 function AIGenerationOverlay({ property }: { property: Property }) {
   const { mutate: generate, isPending } = useGenerateModel()
-  const status = property.generationStatus || "none"
+  const status = isPending ? "pending" : (property.generationStatus || "none")
 
   const handleGenerate = () => {
     generate(property.id, {
@@ -170,6 +177,7 @@ function AIGenerationOverlay({ property }: { property: Property }) {
 
 export function PropertyViewer({ property }: PropertyViewerProps) {
   const [activeTab, setActiveTab] = useState<"3d" | "photos">(property.has3D ? "3d" : "photos")
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isWalkthrough, setIsWalkthrough] = useState(false)
   const [joystickData, setJoystickData] = useState<{ x: number, y: number } | null>(null)
@@ -204,9 +212,9 @@ export function PropertyViewer({ property }: PropertyViewerProps) {
     }
   }, [isWalkthrough])
 
-  const modelUrl = property.model3DUrl?.startsWith('http') || property.model3DUrl?.startsWith('/')
+  const modelUrl = property.model3DUrl && (property.model3DUrl.startsWith('http') || property.model3DUrl.startsWith('/'))
     ? property.model3DUrl 
-    : property.model3DUrl;
+    : null;
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -225,7 +233,7 @@ export function PropertyViewer({ property }: PropertyViewerProps) {
     )}>
       {/* Viewer Container */}
       <div className={cn(
-        "relative overflow-hidden border-4 border-white/20 bg-card shadow-2xl transition-all duration-500",
+        "relative overflow-hidden border-4 border-white/20 bg-slate-950 text-white shadow-2xl transition-all duration-500",
         isFullscreen ? "h-screen w-screen rounded-none border-none" : "aspect-[16/9] rounded-[3rem] lg:aspect-[21/9]"
       )}>
         {/* Top Controls Overlay */}
@@ -254,36 +262,76 @@ export function PropertyViewer({ property }: PropertyViewerProps) {
 
         {activeTab === "3d" ? (
           property.has3D ? (
-            <div className="h-full w-full relative group/canvas">
+            <div className="h-full w-full relative group/canvas bg-[#0c0c0e]">
               <Suspense fallback={
-                <div className="flex h-full w-full flex-col items-center justify-center gap-6 bg-gradient-to-br from-background via-card to-background">
-                  <div className="relative"><div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse" /><Loader2 className="h-16 w-16 animate-spin text-primary relative z-10" /></div>
-                  <div className="text-center"><p className="text-xl font-bold text-foreground">Loading Immersive Scene</p><p className="text-sm text-muted-foreground">Preparing high-fidelity 3D assets...</p></div>
+                <div className="flex h-full w-full flex-col items-center justify-center gap-6 bg-slate-950">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse" />
+                    <Loader2 className="h-16 w-16 animate-spin text-primary relative z-10" />
+                  </div>
+                  <div className="text-center font-serif">
+                    <p className="text-xl font-bold text-white mb-2">Architectural Visualization</p>
+                    <p className="text-sm text-white/50 animate-pulse tracking-widest uppercase">Building 3D Mesh...</p>
+                  </div>
                 </div>
               }>
-                <Canvas shadows gl={{ antialias: true, logarithmicDepthBuffer: true }}>
+                <Canvas 
+                  shadows
+                  className="h-full w-full"
+                  gl={{ 
+                    antialias: true, 
+                    toneMapping: THREE.ACESFilmicToneMapping,
+                    outputColorSpace: THREE.SRGBColorSpace
+                  }}
+                  camera={{ position: [15, 12, 15], fov: 40 }}
+                >
                   <XR store={xrStore}>
-                    <PerspectiveCamera makeDefault position={isWalkthrough ? [0, 1.7, 0] : [10, 8, 10]} fov={isWalkthrough ? 75 : 45} />
-                    <color attach="background" args={["#0a0a0b"]} />
-                    <Environment preset="night" />
-                    <ambientLight intensity={0.2} />
-                    <spotLight position={[20, 20, 20]} angle={0.15} penumbra={1} intensity={2} castShadow />
+                    <PerspectiveCamera makeDefault position={isWalkthrough ? [0, 1.7, 0] : [12, 10, 12]} fov={isWalkthrough ? 75 : 45} />
+                    <color attach="background" args={["#0c0c0e"]} />
+                    
+                    <ambientLight intensity={0.7} />
+                    <pointLight position={[10, 10, 10]} intensity={1.5} castShadow />
+                    <Environment preset="city" />
+                    
                     <XROrigin position={xrPlayerPos} />
-                    <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5} enabled={!isWalkthrough}>
-                      <TeleportTarget onTeleport={setXRPlayerPos}>
-                        <Model url={modelUrl!} />
-                      </TeleportTarget>
-                    </Float>
+                    
+                    <Suspense fallback={null}>
+                      <group>
+                        <TeleportTarget onTeleport={setXRPlayerPos}>
+                          {modelUrl ? (
+                            <Model url={modelUrl} />
+                          ) : (
+                            <mesh>
+                              <boxGeometry args={[1, 1, 1]} />
+                              <meshStandardMaterial color="#3b82f6" emissive="#3b82f6" emissiveIntensity={0.5} />
+                            </mesh>
+                          )}
+                        </TeleportTarget>
+                        <ContactShadows position={[0, -0.01, 0]} opacity={0.4} scale={20} blur={2.4} />
+                      </group>
+                    </Suspense>
+
+                    <gridHelper args={[100, 100, "#333", "#222"]} position={[0, -0.01, 0]} />
+                    
                     {isWalkthrough ? (
                       <>
                         <PointerLockControls />
                         <Player joystickData={joystickData} active={isWalkthrough} />
+                        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
+                           <planeGeometry args={[200, 200]} />
+                           <meshStandardMaterial color="#0c0c0e" roughness={0.8} />
+                        </mesh>
                       </>
                     ) : (
-                      <>
-                        <OrbitControls makeDefault enableDamping dampingFactor={0.05} minDistance={5} maxDistance={30} />
-                        <ContactShadows position={[0, -0.01, 0]} opacity={0.5} scale={40} blur={2.5} far={10} color="#000000" />
-                      </>
+                      <OrbitControls 
+                        makeDefault 
+                        enableDamping 
+                        dampingFactor={0.05} 
+                        minDistance={2} 
+                        maxDistance={60}
+                        autoRotate={!isWalkthrough}
+                        autoRotateSpeed={0.5}
+                      />
                     )}
                   </XR>
                 </Canvas>
@@ -337,25 +385,47 @@ export function PropertyViewer({ property }: PropertyViewerProps) {
           )
         ) : (
           <div className="h-full w-full bg-muted relative group">
-             <div className="grid h-full grid-cols-4 grid-rows-2 gap-3 p-4">
-                <div className="col-span-3 row-span-2 overflow-hidden rounded-[2rem] relative group/main">
-                  <img src={property.images[0]?.startsWith('http') || property.images[0]?.startsWith('/') ? property.images[0] : property.images[0]} className="h-full w-full object-cover transition-transform duration-700 group-hover/main:scale-105" alt={property.title} />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
+             <div className="grid h-full grid-cols-4 grid-rows-2 gap-2 p-3">
+                <div className="col-span-2 row-span-2 overflow-hidden rounded-[2rem] relative group/main bg-[#1e293b]">
+                  {property.images[selectedPhotoIndex] ? (
+                    <img src={property.images[selectedPhotoIndex]} className="h-full w-full object-cover transition-all duration-700 group-hover/main:scale-105" alt={property.title} />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-white/20"><ImageIcon className="h-12 w-12" /></div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none">
+                    <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mb-1">Viewing Photo</p>
+                    <p className="text-white font-serif text-2xl font-bold">{selectedPhotoIndex + 1} of {property.images.length}</p>
+                  </div>
                 </div>
-                {property.images.slice(1, 3).map((img, i) => (
-                  <div key={i} className="overflow-hidden rounded-[1.5rem] relative group/sub">
-                    <img src={img.startsWith('http') || img.startsWith('/') ? img : img} className="h-full w-full object-cover transition-transform duration-700 group-hover/sub:scale-110" alt={`${property.title} ${i + 2}`} />
-                  </div>
-                ))}
-                {property.images.length > 3 ? (
-                  <div className="relative overflow-hidden rounded-[1.5rem] bg-card/50 backdrop-blur-md border border-white/20 flex flex-col items-center justify-center group/more cursor-pointer">
-                    <img src={property.images[3].startsWith('http') || property.images[3].startsWith('/') ? property.images[3] : property.images[3]} className="absolute inset-0 h-full w-full object-cover opacity-20 blur-sm group-hover/more:scale-110 transition-transform duration-700" alt="More photos" />
-                    <span className="relative z-10 text-2xl font-bold text-white">+{property.images.length - 3}</span>
-                    <span className="relative z-10 text-xs font-bold text-white/60 uppercase tracking-widest mt-1">More Photos</span>
-                  </div>
-                ) : (
-                   <div className="rounded-[1.5rem] bg-white/5 border border-white/10 border-dashed flex items-center justify-center"><ImageIcon className="h-8 w-8 text-white/20" /></div>
-                )}
+                <div className="col-span-2 row-span-2 grid grid-cols-2 grid-rows-2 gap-2">
+                  {property.images.slice(0, 5).map((img, i) => {
+                    // Skip the currently selected image in the sub-grid if possible, 
+                    // or just show the others. Let's show fixed indices 0-4 but highlight the active one.
+                    return (
+                      <div 
+                        key={i} 
+                        onClick={() => setSelectedPhotoIndex(i)}
+                        className={cn(
+                          "overflow-hidden rounded-[1.5rem] relative group/sub bg-[#1e293b] cursor-pointer border-2 transition-all",
+                          selectedPhotoIndex === i ? "border-primary shadow-lg scale-95" : "border-transparent hover:border-white/20"
+                        )}
+                      >
+                        <img src={img} className="h-full w-full object-cover transition-transform duration-700 group-hover/sub:scale-110" alt={`${property.title} ${i + 1}`} />
+                        {i === 4 && property.images.length > 5 && (
+                          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center pointer-events-none">
+                            <span className="text-2xl font-bold text-white">+{property.images.length - 5}</span>
+                            <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">More</span>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                  {Array.from({ length: Math.max(0, 4 - property.images.slice(1, 5).length) }).map((_, i) => (
+                    <div key={`empty-${i}`} className="rounded-[1.5rem] bg-white/5 border border-white/10 border-dashed flex items-center justify-center">
+                      <ImageIcon className="h-6 w-6 text-white/10" />
+                    </div>
+                  ))}
+                </div>
               </div>
           </div>
         )}
@@ -369,9 +439,19 @@ export function PropertyViewer({ property }: PropertyViewerProps) {
             {activeTab === "3d" && <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-1 bg-primary" />}
           </button>
           {property.images.map((img, i) => (
-            <button key={i} onClick={() => setActiveTab("photos")} className={cn("group relative h-20 w-28 shrink-0 overflow-hidden rounded-2xl border transition-all duration-300", activeTab === "photos" ? "border-primary ring-4 ring-primary/20 shadow-lg" : "border-white/10 hover:border-white/30")}>
-              <img src={img.startsWith('http') || img.startsWith('/') ? img : img} className={cn("h-full w-full object-cover transition-opacity duration-300", activeTab === "photos" ? "opacity-100" : "opacity-40 group-hover:opacity-100")} alt={`Thumbnail ${i + 1}`} />
-              {activeTab === "photos" && i === 0 && <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-1 bg-primary" />}
+            <button 
+              key={i} 
+              onClick={() => {
+                setActiveTab("photos")
+                setSelectedPhotoIndex(i)
+              }} 
+              className={cn(
+                "group relative h-20 w-28 shrink-0 overflow-hidden rounded-2xl border transition-all duration-300", 
+                activeTab === "photos" && selectedPhotoIndex === i ? "border-primary ring-4 ring-primary/20 shadow-lg" : "border-white/10 hover:border-white/30"
+              )}
+            >
+              <img src={img} className={cn("h-full w-full object-cover transition-opacity duration-300", (activeTab === "photos" && selectedPhotoIndex === i) ? "opacity-100" : "opacity-40 group-hover:opacity-100")} alt={`Thumbnail ${i + 1}`} />
+              {activeTab === "photos" && selectedPhotoIndex === i && <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-1 bg-primary" />}
             </button>
           ))}
         </div>

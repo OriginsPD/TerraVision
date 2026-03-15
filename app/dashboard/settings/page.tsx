@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { User, Bell, Shield, CreditCard, Globe, Palette } from "lucide-react"
+import { useState, useEffect } from "react"
+import { User as UserIcon, Bell, Shield, CreditCard, Globe, Palette, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,16 +11,48 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { useUser } from "@/hooks/api/use-user"
+import { useUser, useUpdateUser } from "@/hooks/api/use-user"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { profileSchema, type ProfileFormValues } from "@/lib/validations"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile")
   const { data: user } = useUser()
+  const { mutate: updateUser, isPending: isUpdating } = useUpdateUser()
 
-  const nameParts = (user?.full_name ?? "John Doe").split(" ")
+  const nameParts = (user?.full_name ?? "").split(" ")
   const firstName = nameParts[0] ?? ""
   const lastName = nameParts.slice(1).join(" ") || ""
   const initials = nameParts.map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+    },
+  })
+
+  // Update form values when user data is loaded
+  useEffect(() => {
+    if (user) {
+      const parts = user.full_name.split(" ")
+      form.reset({
+        firstName: parts[0] ?? "",
+        lastName: parts.slice(1).join(" ") || "",
+        email: user.email,
+        phone: "+1 (555) 123-4567", // Mock phone for now
+      })
+    }
+  }, [user, form])
+
+  const onSubmit = (values: ProfileFormValues) => {
+    updateUser(values)
+  }
 
   return (
     <div className="space-y-8">
@@ -33,7 +65,7 @@ export default function SettingsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-card border border-border flex-wrap h-auto gap-2 p-2">
           <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex items-center gap-2">
-            <User className="h-4 w-4" />
+            <UserIcon className="h-4 w-4" />
             Profile
           </TabsTrigger>
           <TabsTrigger value="notifications" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex items-center gap-2">
@@ -57,44 +89,85 @@ export default function SettingsPage() {
                 <CardTitle className="font-serif text-lg text-foreground">Profile Information</CardTitle>
                 <CardDescription>Update your personal details</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src="/avatar.jpg" alt="Profile" />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xl">{initials}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <Button variant="outline" className="border-border text-foreground hover:bg-secondary">
-                      Change Photo
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <Avatar className="h-20 w-20">
+                        <AvatarImage src="/avatar.jpg" alt="Profile" />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xl">{initials}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <Button type="button" variant="outline" className="border-border text-foreground hover:bg-secondary">
+                          Change Photo
+                        </Button>
+                        <p className="mt-1 text-xs text-muted-foreground">JPG, PNG or GIF. Max 5MB.</p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-foreground">First Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} className="bg-input border-border text-foreground" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-foreground">Last Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} className="bg-input border-border text-foreground" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-foreground">Email</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="email" className="bg-input border-border text-foreground" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-foreground">Phone Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="tel" className="bg-input border-border text-foreground" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90" disabled={isUpdating}>
+                      {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Save Changes
                     </Button>
-                    <p className="mt-1 text-xs text-muted-foreground">JPG, PNG or GIF. Max 5MB.</p>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName" className="text-foreground">First Name</Label>
-                    <Input id="firstName" defaultValue={firstName} className="bg-input border-border text-foreground" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-foreground">Last Name</Label>
-                    <Input id="lastName" defaultValue={lastName} className="bg-input border-border text-foreground" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-foreground">Email</Label>
-                  <Input id="email" type="email" defaultValue={user?.email ?? ""} className="bg-input border-border text-foreground" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-foreground">Phone Number</Label>
-                  <Input id="phone" type="tel" defaultValue="+1 (555) 123-4567" className="bg-input border-border text-foreground" />
-                </div>
-
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                  Save Changes
-                </Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
 
@@ -337,3 +410,4 @@ export default function SettingsPage() {
     </div>
   )
 }
+

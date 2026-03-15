@@ -8,10 +8,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Spinner } from "@/components/ui/spinner"
-import { Search, Send, Phone, Video, MoreVertical, CheckCircle2, MessageSquare, ArrowLeft, Info, Sparkles } from "lucide-react"
+import { Search, Send, Phone, Video, MoreVertical, CheckCircle2, MessageSquare, ArrowLeft, Info, Sparkles, Loader2 } from "lucide-react"
 import { useConversations, useMessages, useSendMessage } from "@/hooks/api/use-messages"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { messageSchema, type MessageFormValues } from "@/lib/validations"
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form"
 
 export default function MessagesPage() {
   const { data: conversations, isLoading: loadingConv } = useConversations()
@@ -19,11 +23,17 @@ export default function MessagesPage() {
   const { data: messages, isLoading: loadingMsgs } = useMessages(selectedId || "")
   const { mutate: sendMessage, isPending: isSending } = useSendMessage()
   
-  const [newMessage, setNewMessage] = useState("")
   const [searchQuery, setSearchSearchQuery] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const selectedConversation = conversations?.find((c: any) => c.id === selectedId)
+
+  const form = useForm<MessageFormValues>({
+    resolver: zodResolver(messageSchema),
+    defaultValues: {
+      content: "",
+    },
+  })
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -31,12 +41,11 @@ export default function MessagesPage() {
     }
   }, [messages])
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newMessage.trim() || !selectedId || isSending) return
+  const onSubmit = (values: MessageFormValues) => {
+    if (!selectedId || isSending) return
 
-    sendMessage({ conversationId: selectedId, content: newMessage }, {
-      onSuccess: () => setNewMessage("")
+    sendMessage({ conversationId: selectedId, content: values.content }, {
+      onSuccess: () => form.reset()
     })
   }
 
@@ -237,31 +246,40 @@ export default function MessagesPage() {
 
               {/* Message Input - Glossy Footer */}
               <div className="border-t border-white/10 p-6 bg-white/5 backdrop-blur-xl relative z-10">
-                <form className="flex items-center gap-4 max-w-4xl mx-auto" onSubmit={handleSend}>
-                  <div className="relative flex-1 group">
-                    <div className="absolute inset-0 bg-primary/10 rounded-2xl blur-lg opacity-0 group-focus-within:opacity-100 transition-opacity" />
-                    <Input
-                      placeholder="Type your message here..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      className="relative z-10 h-14 rounded-[1.5rem] bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all font-medium pr-12"
+                <Form {...form}>
+                  <form className="flex items-center gap-4 max-w-4xl mx-auto" onSubmit={form.handleSubmit(onSubmit)}>
+                    <FormField
+                      control={form.control}
+                      name="content"
+                      render={({ field }) => (
+                        <FormItem className="relative flex-1 group">
+                          <div className="absolute inset-0 bg-primary/10 rounded-2xl blur-lg opacity-0 group-focus-within:opacity-100 transition-opacity" />
+                          <FormControl>
+                            <Input
+                              placeholder="Type your message here..."
+                              className="relative z-10 h-14 rounded-[1.5rem] bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all font-medium pr-12"
+                              {...field}
+                            />
+                          </FormControl>
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
+                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10 text-muted-foreground">
+                               <Sparkles className="h-4 w-4" />
+                             </Button>
+                          </div>
+                        </FormItem>
+                      )}
                     />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 z-10">
-                       <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10 text-muted-foreground">
-                         <Sparkles className="h-4 w-4" />
-                       </Button>
-                    </div>
-                  </div>
-                  <Button 
-                    type="submit" 
-                    variant="glossy" 
-                    size="icon" 
-                    className="h-14 w-14 rounded-2xl shrink-0 shadow-xl shadow-primary/20 transition-transform active:scale-90"
-                    disabled={!newMessage.trim() || isSending}
-                  >
-                    {isSending ? <Loader2 className="h-6 w-6 animate-spin" /> : <Send className="h-6 w-6 fill-white" />}
-                  </Button>
-                </form>
+                    <Button 
+                      type="submit" 
+                      variant="glossy" 
+                      size="icon" 
+                      className="h-14 w-14 rounded-2xl shrink-0 shadow-xl shadow-primary/20 transition-transform active:scale-90"
+                      disabled={isSending}
+                    >
+                      {isSending ? <Loader2 className="h-6 w-6 animate-spin" /> : <Send className="h-6 w-6 fill-white" />}
+                    </Button>
+                  </form>
+                </Form>
               </div>
             </div>
           ) : (
@@ -298,6 +316,6 @@ export default function MessagesPage() {
   )
 }
 
-function Loader2({ className }: { className?: string }) {
-  return <Spinner className={cn("animate-spin", className)} />
-}
+
+
+

@@ -79,24 +79,42 @@ model Session {
 }
 
 model Property {
-  id               Int        @id @default(autoincrement())
-  ownerId          String     @map("owner_id") @db.VarChar
-  title            String?    @db.VarChar
-  description      String?    @db.VarChar
-  location         String?    @db.VarChar
+  id               Int             @id @default(autoincrement())
+  ownerId          String          @map("owner_id") @db.VarChar
+  title            String?         @db.VarChar
+  description      String?         @db.VarChar
+  location         String?         @db.VarChar
   price            Float?
-  landSize         Float?     @map("land_size")
-  imageUrl         String?    @map("image_url") @db.VarChar
-  model_3d_url     String?    @db.VarChar
-  isModelGenerated Boolean?   @map("is_model_generated")
-  createdAt        DateTime?  @default(now()) @map("created_at") @db.Timestamp(6)
-
-  owner     User       @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  favorites Favorite[]
+  landSize         Float?          @map("land_size")
+  imageUrl         String?         @map("image_url") @db.VarChar
+  imageUrlFront    String?         @map("image_url_front") @db.VarChar
+  imageUrlBack     String?         @map("image_url_back") @db.VarChar
+  imageUrlLeft     String?         @map("image_url_left") @db.VarChar
+  imageUrlRight    String?         @map("image_url_right") @db.VarChar
+  model_3d_url     String?         @db.VarChar
+  isModelGenerated Boolean?        @map("is_model_generated")
+  createdAt        DateTime?       @default(now()) @map("created_at") @db.Timestamp(6)
+  
+  images           PropertyImage[]
+  owner            User            @relation(fields: [ownerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  favorites        Favorite[]
 
   @@index([id], map: "ix_properties_id")
   @@index([title], map: "ix_properties_title")
   @@map("properties")
+}
+
+model PropertyImage {
+  id         Int      @id @default(autoincrement())
+  propertyId Int      @map("property_id")
+  url        String   @db.VarChar
+  type       String?  @db.VarChar // e.g., "front", "back", "left", "right", "other"
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("property_images")
 }
 
 model Professional {

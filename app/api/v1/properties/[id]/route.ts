@@ -6,6 +6,17 @@ import { saveUploadedFile } from "@/lib/server/storage"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function serializeProperty(p: any) {
+  const legacyImages = [
+    p.imageUrl,
+    p.imageUrlFront,
+    p.imageUrlBack,
+    p.imageUrlLeft,
+    p.imageUrlRight
+  ].filter(Boolean) as string[];
+
+  const relationImages = p.images?.map((img: any) => img.url) || [];
+  const allImages = Array.from(new Set([...legacyImages, ...relationImages]));
+
   return {
     id: p.id,
     title: p.title,
@@ -14,10 +25,15 @@ function serializeProperty(p: any) {
     location: p.location,
     land_size: p.landSize,
     image_url: p.imageUrl,
+    image_url_front: p.imageUrlFront,
+    image_url_back: p.imageUrlBack,
+    image_url_left: p.imageUrlLeft,
+    image_url_right: p.imageUrlRight,
     is_model_generated: p.isModelGenerated ?? false,
     model_url: p.model_3d_url,
     owner_id: p.ownerId,
     created_at: p.createdAt,
+    images: allImages,
   }
 }
 
@@ -32,6 +48,7 @@ export async function GET(
 
     const property = await db.property.findUnique({
       where: { id: propertyId },
+      include: { images: true }
     })
 
     if (!property) return errorResponse("Property not found", 404)
@@ -84,6 +101,7 @@ export async function PUT(
     const updated = await db.property.update({
       where: { id: propertyId },
       data: updates,
+      include: { images: true }
     })
 
     return baseResponse({ property: serializeProperty(updated) })
