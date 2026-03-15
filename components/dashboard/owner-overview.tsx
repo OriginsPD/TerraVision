@@ -92,7 +92,7 @@ export function OwnerOverview({ user }: { user: User }) {
             <div className="h-[300px] w-full">
               {analytics?.typeDistribution ? (
                 <ChartContainer config={{ count: { label: "Count", color: "var(--primary)" } }}>
-                  <LineChart data={analytics.typeDistribution.map(t => ({ name: t.type, value: t.count }))}>
+                  <LineChart data={analytics.typeDistribution.map((t: { type: string, count: number }) => ({ name: t.type, value: t.count }))}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                     <XAxis 
                       dataKey="name" 
