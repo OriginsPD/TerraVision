@@ -45,8 +45,8 @@ export default function HowItWorksPage() {
           </div>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {steps.map((step, i) => (
-              <div key={i} className="flex flex-col items-center text-center p-6 rounded-2xl border border-border bg-card">
+            {steps.map((step) => (
+              <div key={step.title} className="flex flex-col items-center text-center p-6 rounded-2xl border border-border bg-card">
                 <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
                   <step.icon className="h-8 w-8 text-primary" />
                 </div>

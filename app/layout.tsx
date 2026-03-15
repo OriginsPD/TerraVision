@@ -62,9 +62,10 @@ export default function RootLayout({
           >
             {children}
           </ThemeProvider>
-        </QueryProvider>
-        <Analytics />
-      </body>
-    </html>
-  )
-}
+          </QueryProvider>
+          {/* <Analytics /> */}
+          </body>
+          </html>
+          )
+          }
+
