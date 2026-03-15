@@ -1,5 +1,4 @@
-import { PrismaClient, UserRole } from "@prisma/client"
-import { v4 as uuidv4 } from "uuid"
+import { PrismaClient, UserRole, PropertyType } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
@@ -18,7 +17,6 @@ async function main() {
 
   console.log("Seeding users...")
 
-  // Create a mix of users
   const usersData = [
     { id: "user-1", email: "alex@terravision.com", first: "Alex", last: "Vance", role: UserRole.OWNER },
     { id: "user-2", email: "sarah@terravision.com", first: "Sarah", last: "Chen", role: UserRole.ARCHITECT },
@@ -47,10 +45,10 @@ async function main() {
   console.log("Seeding professionals...")
 
   const professionalsData = [
-    { userId: "user-2", profession: "Architect", bio: "Award-winning minimalist architect.", rate: 185, projects: 28 },
-    { userId: "user-3", profession: "General Contractor", bio: "20 years of luxury residential builds.", rate: 120, projects: 114 },
-    { userId: "user-6", profession: "Master Mason", bio: "Stone work specialist for coastal estates.", rate: 95, projects: 45 },
-    { userId: "user-7", profession: "Finish Carpenter", bio: "Custom cabinetry and hardwood details.", rate: 85, projects: 72 },
+    { userId: "user-2", profession: "Architect", bio: "Award-winning minimalist architect.", rate: 185 },
+    { userId: "user-3", profession: "General Contractor", bio: "20 years of luxury residential builds.", rate: 120 },
+    { userId: "user-6", profession: "Master Mason", bio: "Stone work specialist for coastal estates.", rate: 95 },
+    { userId: "user-7", profession: "Finish Carpenter", bio: "Custom cabinetry and hardwood details.", rate: 85 },
   ]
 
   for (const p of professionalsData) {
@@ -72,8 +70,13 @@ async function main() {
       title: "Azure Bay Modern Villa",
       desc: "A stunning 4-bedroom glass villa overlooking the Malibu coast. Features an open-concept living area and infinity pool.",
       loc: "Malibu, CA",
+      lat: 34.0259,
+      lng: -118.7798,
       price: 4500000,
       land: 1.2,
+      type: PropertyType.VILLA,
+      amenities: ["Pool", "Beach Access", "Smart Home", "Home Theater"],
+      views: 1240,
       images: [
         { url: "https://images.unsplash.com/photo-1613490493576-7fde63acd811", type: "main" },
         { url: "https://images.unsplash.com/photo-1613977257363-707ba9348227", type: "front" },
@@ -89,8 +92,13 @@ async function main() {
       title: "Aspen Alpine Chalet",
       desc: "Cozy timber-framed mountain retreat with heated floors and floor-to-ceiling mountain views.",
       loc: "Aspen, CO",
+      lat: 39.1911,
+      lng: -106.8175,
       price: 2800000,
       land: 3.5,
+      type: PropertyType.CHALET,
+      amenities: ["Ski-in/Ski-out", "Sauna", "Wine Cellar", "Fireplace"],
+      views: 850,
       images: [
         { url: "https://images.unsplash.com/photo-1518780664697-55e3ad937233", type: "main" },
         { url: "https://images.unsplash.com/photo-1542718610-a1d656d1884c", type: "front" },
@@ -103,8 +111,13 @@ async function main() {
       title: "Desert Mirror Residence",
       desc: "Minimalist concrete and glass structure designed to disappear into the Joshua Tree landscape.",
       loc: "Joshua Tree, CA",
+      lat: 34.1333,
+      lng: -116.3131,
       price: 1150000,
       land: 5.0,
+      type: PropertyType.HOUSE,
+      amenities: ["Sustainable Design", "Solar Panels", "Stargazing Deck"],
+      views: 2100,
       images: [
         { url: "https://images.unsplash.com/photo-1480074568708-e7b720bb3f09", type: "main" },
         { url: "https://images.unsplash.com/photo-1449156003053-930cce580dd0", type: "front" },
@@ -115,26 +128,17 @@ async function main() {
       modelUrl: "https://modelviewer.dev/shared-assets/models/Astronaut.glb"
     },
     {
-      ownerId: "user-5",
-      title: "Seattle Sustainable Loft",
-      desc: "Carbon-neutral urban dwelling with rooftop garden and integrated smart home systems.",
-      loc: "Seattle, WA",
-      price: 1450000,
-      land: 0.15,
-      images: [
-        { url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688", type: "main" },
-        { url: "https://images.unsplash.com/photo-1558036117-15d82a90b9b1", type: "front" },
-        { url: "https://images.unsplash.com/photo-1600585154340-be6199f7a099", type: "back" },
-      ],
-      has3D: false
-    },
-    {
       ownerId: "user-1",
       title: "Miami Beach Penthouse",
       desc: "Luxury 50th floor unit with private elevator and wraparound terrace.",
       loc: "Miami, FL",
+      lat: 25.7617,
+      lng: -80.1918,
       price: 5900000,
       land: 0.05,
+      type: PropertyType.PENTHOUSE,
+      amenities: ["Ocean View", "Private Elevator", "Gym", "Concierge"],
+      views: 3400,
       images: [
         { url: "https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd", type: "main" },
         { url: "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde", type: "front" },
@@ -148,38 +152,17 @@ async function main() {
       title: "Austin Hill Country Estate",
       desc: "Contemporary limestone ranch house with panoramic views and vineyard potential.",
       loc: "Austin, TX",
+      lat: 30.2672,
+      lng: -97.7431,
       price: 3200000,
       land: 12.0,
+      type: PropertyType.HOUSE,
+      amenities: ["Vineyard", "Guest House", "Outdoor Kitchen"],
+      views: 420,
       images: [
         { url: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9", type: "main" },
         { url: "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0", type: "front" },
         { url: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d", type: "back" },
-      ],
-      has3D: false
-    },
-    {
-      ownerId: "user-1",
-      title: "Portland Eco-Friendly Townhome",
-      desc: "Stylish, energy-efficient living in the heart of Portland's most walkable neighborhood.",
-      loc: "Portland, OR",
-      price: 890000,
-      land: 0.1,
-      images: [
-        { url: "https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6", type: "main" },
-        { url: "https://images.unsplash.com/photo-1600566752355-35792bedbae1", type: "front" },
-      ],
-      has3D: false
-    },
-    {
-      ownerId: "user-5",
-      title: "Vermont Maple Woods Cabin",
-      desc: "Traditional log cabin on 40 acres of prime maple forest. Secluded and serene.",
-      loc: "Stowe, VT",
-      price: 650000,
-      land: 40.0,
-      images: [
-        { url: "https://images.unsplash.com/photo-1472224311443-9399881b95b4", type: "main" },
-        { url: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b", type: "front" },
       ],
       has3D: false
     }
@@ -192,8 +175,13 @@ async function main() {
         title: p.title,
         description: p.desc,
         location: p.loc,
+        latitude: p.lat,
+        longitude: p.lng,
         price: p.price,
         landSize: p.land,
+        type: p.type,
+        amenities: p.amenities,
+        views: p.views,
         imageUrl: p.images[0].url,
         imageUrlFront: p.images.find(img => img.type === "front")?.url,
         imageUrlBack: p.images.find(img => img.type === "back")?.url,
@@ -207,7 +195,6 @@ async function main() {
       }
     })
 
-    // Add some favorites
     if (Math.random() > 0.5) {
       await prisma.favorite.create({
         data: {

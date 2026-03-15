@@ -12,6 +12,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Eye, EyeOff, User, Home, Building2, Mail, Lock, UserCircle, Github, Chrome, Sparkles } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
+import { setTokens } from "@/lib/auth"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -55,15 +56,22 @@ export function RegisterForm() {
       const firstName = parts[0] ?? ""
       const lastName = parts.slice(1).join(" ") || firstName
       
-      await apiClient.post("/auth/register", {
+      const res = await apiClient.post("/auth/register", {
         email: values.email,
         password: values.password,
         firstName,
         lastName,
         role: toBackendRole(values.role),
-      })
-      toast.success("Account created! Welcome to TerraVision.")
-      router.push("/login")
+      }) as any
+      
+      if (res && res.access_token) {
+        setTokens(res.access_token, res.refresh_token)
+        toast.success("Account created! Welcome to TerraVision.")
+        router.push("/dashboard")
+      } else {
+        toast.success("Account created! Please sign in.")
+        router.push("/login")
+      }
     } catch (error: any) {
       toast.error(error.message || "Registration failed. Please try again.")
     } finally {

@@ -7,16 +7,19 @@ export interface Property {
   description: string
   location: string
   address: string
+  latitude?: number | null
+  longitude?: number | null
   price: number
   size: number
   sizeUnit: string
-  type: "land" | "waterfront" | "mountain" | "desert" | "urban" | "rural"
-  status: "available" | "pending" | "sold" | "For Sale"
+  type: "HOUSE" | "VILLA" | "APARTMENT" | "LAND" | "CHALET" | "TOWNHOME" | "PENTHOUSE" | "STUDIO"
+  status: "available" | "pending" | "sold"
   has3D: boolean
   model3DUrl?: string
   generationStatus?: "none" | "pending" | "completed" | "failed"
   images: string[]
-  features: string[]
+  amenities: string[]
+  views: number
   ownerId: string
   ownerName: string
   createdAt: string
@@ -66,17 +69,18 @@ export const properties: Property[] = [
     price: 1250000,
     size: 1.5,
     sizeUnit: "acres",
-    type: "waterfront",
+    type: "VILLA",
     status: "available",
     has3D: true,
     model3DUrl: "/models/modern_house.glb", // High-quality sample
     generationStatus: "completed",
     images: ["https://images.unsplash.com/photo-1507525428034-b723cf961d3e", "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2"],
-    features: ["Private Beach", "Permit Approved", "Deep Water Dock", "Unobstructed Views"],
+    amenities: ["Private Beach", "Permit Approved", "Deep Water Dock", "Unobstructed Views"],
     ownerId: "owner-1",
     ownerName: "Alexander Vance",
     createdAt: "2026-03-01T10:00:00Z",
-    featured: true
+    featured: true,
+    views: 450
   },
   {
     id: "prop-2",
@@ -87,16 +91,17 @@ export const properties: Property[] = [
     price: 850000,
     size: 4.2,
     sizeUnit: "acres",
-    type: "mountain",
+    type: "CHALET",
     status: "available",
     has3D: false,
     generationStatus: "pending", // Tests the glossy processing overlay
     images: ["https://images.unsplash.com/photo-1464822759023-fed622ff2c3b", "https://images.unsplash.com/photo-1454496522488-7a8e488e8606"],
-    features: ["Natural Spring", "Ski-in/Ski-out potential", "Off-grid Ready"],
+    amenities: ["Natural Spring", "Ski-in/Ski-out potential", "Off-grid Ready"],
     ownerId: "owner-2",
     ownerName: "Sierra Heights Dev",
     createdAt: "2026-03-10T14:30:00Z",
-    featured: true
+    featured: true,
+    views: 280
   },
   {
     id: "prop-3",
@@ -107,17 +112,18 @@ export const properties: Property[] = [
     price: 320000,
     size: 5.0,
     sizeUnit: "acres",
-    type: "desert",
+    type: "HOUSE",
     status: "available",
     has3D: true,
     model3DUrl: "/models/modern_house.glb",
     generationStatus: "completed",
     images: ["https://images.unsplash.com/photo-1502318217862-aa4e294ba657", "https://images.unsplash.com/photo-1509316785289-025f54846b6a"],
-    features: ["Rock Formations", "Stellar Stargazing", "Solar Potential"],
+    amenities: ["Rock Formations", "Stellar Stargazing", "Solar Potential"],
     ownerId: "owner-1",
     ownerName: "Alexander Vance",
     createdAt: "2026-02-15T09:00:00Z",
-    featured: false
+    featured: false,
+    views: 120
   },
   {
     id: "prop-4",
@@ -128,16 +134,17 @@ export const properties: Property[] = [
     price: 540000,
     size: 12.0,
     sizeUnit: "acres",
-    type: "rural",
+    type: "LAND",
     status: "pending",
     has3D: false,
     generationStatus: "none", // Tests the "Generate 3D" CTA
     images: ["https://images.unsplash.com/photo-1500382017468-9049fed747ef", "https://images.unsplash.com/photo-1444858291040-58f756a3bcd6"],
-    features: ["Fertile Soil", "Stable Barn", "Well Access", "Fully Fenced"],
+    amenities: ["Fertile Soil", "Stable Barn", "Well Access", "Fully Fenced"],
     ownerId: "owner-3",
     ownerName: "Green Pastures Ltd",
     createdAt: "2026-03-12T11:20:00Z",
-    featured: false
+    featured: false,
+    views: 85
   },
   {
     id: "prop-5",
@@ -148,17 +155,18 @@ export const properties: Property[] = [
     price: 2100000,
     size: 0.25,
     sizeUnit: "acres",
-    type: "urban",
+    type: "STUDIO",
     status: "available",
     has3D: true,
     model3DUrl: "/models/modern_house.glb",
     generationStatus: "completed",
     images: ["https://images.unsplash.com/photo-1477959858617-67f85cf4f1df", "https://images.unsplash.com/photo-1449824913935-59a10b8d2000"],
-    features: ["Mixed-use Zoning", "Corner Lot", "Utilities at Site"],
+    amenities: ["Mixed-use Zoning", "Corner Lot", "Utilities at Site"],
     ownerId: "owner-2",
     ownerName: "Sierra Heights Dev",
     createdAt: "2026-01-20T16:45:00Z",
-    featured: false
+    featured: false,
+    views: 310
   }
 ];
 

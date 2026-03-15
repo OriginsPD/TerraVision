@@ -19,6 +19,17 @@ enum UserRole {
   @@map("userrole")
 }
 
+enum PropertyType {
+  HOUSE
+  VILLA
+  APARTMENT
+  LAND
+  CHALET
+  TOWNHOME
+  PENTHOUSE
+  STUDIO
+}
+
 model User {
   id             String         @id @db.VarChar
   email          String         @unique(map: "ix_user_email") @db.VarChar
@@ -84,8 +95,13 @@ model Property {
   title            String?         @db.VarChar
   description      String?         @db.VarChar
   location         String?         @db.VarChar
+  latitude         Float?
+  longitude        Float?
   price            Float?
   landSize         Float?          @map("land_size")
+  type             PropertyType?   @default(HOUSE)
+  amenities        String[]        @default([])
+  views            Int             @default(0)
   imageUrl         String?         @map("image_url") @db.VarChar
   imageUrlFront    String?         @map("image_url_front") @db.VarChar
   imageUrlBack     String?         @map("image_url_back") @db.VarChar

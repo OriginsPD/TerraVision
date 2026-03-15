@@ -25,6 +25,9 @@ export async function GET(
     const convId = parseInt(id)
     if (isNaN(convId)) return errorResponse("Invalid conversation ID", 400)
 
+    const { searchParams } = new URL(req.url)
+    const since = searchParams.get("since")
+
     const conversation = await db.conversation.findUnique({
       where: { id: convId },
     })
@@ -35,10 +38,28 @@ export async function GET(
       return errorResponse("Forbidden", 403)
     }
 
+    const where: any = { conversationId: convId }
+    if (since) {
+      where.createdAt = { gt: new Date(since) }
+    }
+
     const messages = await db.message.findMany({
-      where: { conversationId: convId },
+      where,
       orderBy: { createdAt: "asc" },
     })
+
+    // Background: Mark messages as read if the current user is NOT the sender
+    if (messages.length > 0) {
+      await db.message.updateMany({
+        where: {
+          conversationId: convId,
+          senderId: { not: userId },
+          is_read: { not: true },
+          id: { in: messages.map(m => m.id) }
+        },
+        data: { is_read: true }
+      })
+    }
 
     return baseResponse({ messages: messages.map(serializeMessage) })
   } catch (e) {

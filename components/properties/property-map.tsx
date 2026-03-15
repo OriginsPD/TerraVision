@@ -24,28 +24,27 @@ function ChangeView({ center }: { center: L.LatLngExpression }) {
 interface PropertyMapProps {
   address: string
   title: string
+  lat?: number | null
+  lng?: number | null
 }
 
-export default function PropertyMap({ address, title }: PropertyMapProps) {
-  // Simulating coordinates based on address for demo purposes
-  // In a real app, these would come from the property data or a geocoding service
-  const [position, setPosition] = useState<L.LatLngExpression>([37.7749, -122.4194])
+export default function PropertyMap({ address, title, lat, lng }: PropertyMapProps) {
   const [mounted, setMounted] = useState(false)
+  
+  // Default to a fallback if none provided (e.g., center of US or CA)
+  const position: L.LatLngExpression = (lat && lng) 
+    ? [lat, lng] 
+    : [34.0522, -118.2437] // Default to LA if nothing else
 
   useEffect(() => {
     setMounted(true)
-    // Simulate finding a location
-    const timer = setTimeout(() => {
-      // Random-ish variation based on title to make different properties look different
-      const seed = title.length
-      const lat = 34 + (seed % 10) * 0.5
-      const lng = -118 + (seed % 10) * 0.5
-      setPosition([lat, lng])
-    }, 500)
-    return () => clearTimeout(timer)
-  }, [title])
+  }, [])
 
-  if (!mounted) return null
+  if (!mounted) return (
+    <div className="w-full h-full bg-slate-900 animate-pulse flex items-center justify-center">
+      <MapPin className="h-8 w-8 text-primary/20" />
+    </div>
+  )
 
   return (
     <div className="relative w-full h-full map-container group">

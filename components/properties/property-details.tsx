@@ -103,7 +103,7 @@ export function PropertyDetails({ property }: PropertyDetailsProps) {
 
       <Separator className="bg-white/10" />
 
-      {/* Features Section */}
+      {/* Amenities Section */}
       <div className="grid gap-8 lg:grid-cols-12">
         <div className="lg:col-span-4">
            <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
@@ -115,12 +115,12 @@ export function PropertyDetails({ property }: PropertyDetailsProps) {
         </div>
         <div className="lg:col-span-8">
           <div className="grid gap-6 sm:grid-cols-2">
-            {property.features.map((feature) => (
-              <div key={feature} className="flex items-center gap-4 bg-white/5 border border-white/10 p-5 rounded-3xl hover:bg-white/10 transition-colors group">
+            {property.amenities.map((amenity) => (
+              <div key={amenity} className="flex items-center gap-4 bg-white/5 border border-white/10 p-5 rounded-3xl hover:bg-white/10 transition-colors group">
                 <div className="h-8 w-8 rounded-xl bg-accent/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <CheckCircle2 className="h-4 w-4 text-accent" />
                 </div>
-                <span className="text-lg font-bold text-foreground/80">{feature}</span>
+                <span className="text-lg font-bold text-foreground/80">{amenity}</span>
               </div>
             ))}
           </div>

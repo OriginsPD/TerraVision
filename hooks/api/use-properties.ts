@@ -14,10 +14,12 @@ export const mapBackendProperty = (p: any): Property => ({
   description: p.description ?? "",
   location: p.location,
   address: p.location,
+  latitude: p.latitude,
+  longitude: p.longitude,
   price: p.price,
   size: p.landSize ?? p.land_size ?? 0,
   sizeUnit: "acres",
-  type: "land",
+  type: p.type || "HOUSE",
   status: p.status || "available",
   has3D: !!(p.model_3d_url || p.model_url),
   model3DUrl: p.model_3d_url || p.model_url || null,
@@ -29,10 +31,11 @@ export const mapBackendProperty = (p: any): Property => ({
     ? "pending"
     : "none",
   images: p.images || [],
-  features: p.features || [],
-  ownerId: p.owner_id?.toString() ?? "",
+  amenities: p.amenities || [],
+  views: p.views || 0,
+  ownerId: p.owner_id?.toString() ?? p.ownerId?.toString() ?? "",
   ownerName: "Owner",
-  createdAt: p.created_at ?? new Date().toISOString(),
+  createdAt: p.created_at ?? p.createdAt ?? new Date().toISOString(),
   featured: !!p.featured,
 })
 

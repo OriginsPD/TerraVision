@@ -51,13 +51,19 @@ async function request(path: string, options: RequestOptions = {}): Promise<unkn
 
   // ── 401 handling: refresh and retry once ──────────────────────────────────
   if (response.status === 401) {
+    const token = getAccessToken()
+    if (!token) {
+      // Not logged in – just return error, do not redirect
+      throw new Error("Unauthorized")
+    }
+
     const newToken = await refreshAccessToken()
     if (newToken) {
       headers["Authorization"] = `Bearer ${newToken}`
       response = await fetch(url, { method: options.method ?? "GET", headers, body })
     } else {
-      // Refresh failed – force logout (clearTokens already called inside refreshAccessToken)
-      if (typeof window !== "undefined") {
+      // Refresh failed – force logout
+      if (typeof window !== "undefined" && window.location.pathname !== "/") {
         window.location.href = "/login"
       }
       throw new Error("Session expired. Please log in again.")

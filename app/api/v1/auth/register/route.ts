@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import bcrypt from "bcryptjs"
 import { v4 as uuidv4 } from "uuid"
 import { db } from "@/lib/server/db"
+import { createAccessToken, createRefreshToken } from "@/lib/server/auth"
 import { baseResponse, errorResponse } from "@/lib/server/response"
 import { UserRole } from "@prisma/client"
 
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Store password in account table (Better Auth pattern)
+    // Store password in account table
     await db.account.create({
       data: {
         id: accountId,
@@ -74,15 +75,34 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    const roleStr = (user.role ?? "BUYER").toLowerCase()
+    const accessToken = await createAccessToken(user.id, roleStr)
+    const refreshToken = await createRefreshToken(user.id, roleStr)
+
+    // Store refresh token in session table
+    const sessionId = uuidv4().replace(/-/g, "")
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    await db.session.create({
+      data: {
+        id: sessionId,
+        userId: user.id,
+        token: refreshToken,
+        expiresAt,
+      },
+    })
+
     return baseResponse(
       {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        token_type: "bearer",
         user: {
           id: user.id,
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
           full_name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim(),
-          role: (user.role ?? "BUYER").toLowerCase(),
+          role: roleStr,
           isActive: user.isActive ?? true,
         },
       },
