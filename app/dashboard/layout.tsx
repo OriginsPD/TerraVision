@@ -1,4 +1,5 @@
 import { DashboardNav } from "@/components/dashboard/dashboard-nav"
+import { Suspense } from "react"
 
 export const metadata = {
   title: "Dashboard | TerraVision",
@@ -12,7 +13,9 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="min-h-screen bg-background">
-      <DashboardNav />
+      <Suspense fallback={<div className="h-20 bg-background/5 animate-pulse" />}>
+        <DashboardNav />
+      </Suspense>
       <div className="flex">
         {children}
       </div>

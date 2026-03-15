@@ -20,6 +20,7 @@ const professionLabels: Record<Professional["profession"], string> = {
   electrician: "Electrician",
   plumber: "Plumber",
   interior_designer: "Interior Designer",
+  designer: "Interior Designer",
 }
 
 const professionColors: Record<Professional["profession"], string> = {
@@ -30,6 +31,7 @@ const professionColors: Record<Professional["profession"], string> = {
   electrician: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
   plumber: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
   interior_designer: "bg-pink-500/10 text-pink-400 border-pink-500/20",
+  designer: "bg-pink-500/10 text-pink-400 border-pink-500/20",
 }
 
 function ProfessionalCard({ professional }: { professional: Professional }) {

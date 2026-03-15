@@ -29,7 +29,7 @@ export default function MarketplacePage() {
         <div className="absolute bottom-[10%] right-[5%] w-[300px] h-[300px] bg-accent/20 rounded-full blur-[100px] animate-pulse delay-1000" />
 
         <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -43,7 +43,7 @@ export default function MarketplacePage() {
               Development <span className="text-gradient">Marketplace</span>
             </h1>
             <p className="mt-8 text-xl font-medium text-muted-foreground/80 leading-relaxed">
-              From blueprints to final brick. Connect with elite architects and builders 
+              From blueprints to final brick. Connect with elite architects and builders
               to transform your land into a masterpiece.
             </p>
           </motion.div>
@@ -136,7 +136,7 @@ export default function MarketplacePage() {
           ) : (
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {featuredProfessionals.map((pro, index) => {
-                const name = (pro as any).name || (pro as any).user?.full_name || "Professional";
+                const name = pro.user?.full_name || "Professional";
                 return (
                   <motion.div
                     key={pro.id}
@@ -145,7 +145,7 @@ export default function MarketplacePage() {
                     transition={{ duration: 0.4, delay: index * 0.1 }}
                     viewport={{ once: true }}
                   >
-                    <Link 
+                    <Link
                       href={`/marketplace/professionals/${pro.id}`}
                       className="group block h-full"
                     >
@@ -157,18 +157,18 @@ export default function MarketplacePage() {
                         </div>
                         <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{name}</h3>
                         <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest mt-1">{pro.profession}</p>
-                        
+
                         <div className="mt-6 flex items-center gap-2">
                           <div className="flex items-center gap-1.5 bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
                             <Star className="h-4 w-4 fill-primary text-primary" />
-                            <span className="font-bold text-primary">4.9</span>
+                            <span className="font-bold text-primary">{pro.rating}</span>
                           </div>
-                          <span className="text-xs font-bold text-muted-foreground">(24 reviews)</span>
+                          <span className="text-xs font-bold text-muted-foreground">({pro.reviewCount} reviews)</span>
                         </div>
 
                         <div className="mt-4 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                           <MapPin className="h-4 w-4 text-accent" />
-                          Remote / Local
+                          {pro.location}
                         </div>
 
                         <div className="mt-8 pt-6 border-t border-white/10">
@@ -189,7 +189,7 @@ export default function MarketplacePage() {
       {/* Floor Plans - Immersive Grid */}
       <section className="relative py-24 bg-white/5 border-t border-white/10">
         <div className="absolute left-0 bottom-0 w-full h-full bg-[linear-gradient(to_right,oklch(var(--primary)_/_0.03)_1px,transparent_1px),linear-gradient(to_bottom,oklch(var(--primary)_/_0.03)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
-        
+
         <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-12">
             <div>
@@ -215,7 +215,7 @@ export default function MarketplacePage() {
             </div>
           ) : (
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredPlans.map((plan, index) => (
+              {featuredPlans.map((plan: any, index: number) => (
                 <motion.div
                   key={plan.id}
                   initial={{ opacity: 0, x: 20 }}
@@ -223,7 +223,7 @@ export default function MarketplacePage() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   viewport={{ once: true }}
                 >
-                  <Link 
+                  <Link
                     href={`/marketplace/floor-plans/${plan.id}`}
                     className="group block h-full"
                   >
@@ -245,7 +245,7 @@ export default function MarketplacePage() {
                         <p className="mt-1 text-sm font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                           by <span className="text-foreground">{plan.architectName}</span>
                         </p>
-                        
+
                         <div className="mt-8 flex items-center gap-4">
                           <div className="flex flex-col">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Area</span>

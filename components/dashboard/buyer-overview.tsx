@@ -4,14 +4,25 @@ import { User } from "@/hooks/api/use-user"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Heart, ShoppingBag, MessageSquare, Compass, Sparkles, ArrowRight, Star, MapPin, Box } from "lucide-react"
+import { Heart, ShoppingBag, MessageSquare, Compass, Sparkles, ArrowRight, Star, MapPin, Box, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { properties } from "@/lib/data"
+import { useAnalytics } from "@/hooks/api/use-analytics"
+import { cn } from "@/lib/utils"
 
 export function BuyerOverview({ user }: { user: User }) {
   const savedProperties = properties.slice(0, 2)
-  
+  const { data: analytics, isLoading } = useAnalytics()
+
+  const iconMap: Record<string, any> = {
+    "Properties Saved": Heart,
+    "My Library": ShoppingBag,
+    "Active Chats": MessageSquare,
+    "Architects Hired": Star,
+    "Virtual Tours": Box
+  }
+
   return (
     <div className="p-6 lg:p-10 space-y-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -32,24 +43,36 @@ export function BuyerOverview({ user }: { user: User }) {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: "Properties Saved", value: "12", icon: Heart, color: "text-primary", bg: "bg-primary/10" },
-          { label: "My Library", value: "3", icon: ShoppingBag, color: "text-accent", bg: "bg-accent/10" },
-          { label: "Active Chats", value: "5", icon: MessageSquare, color: "text-primary", bg: "bg-primary/10" },
-          { label: "Architects Hired", value: "1", icon: Star, color: "text-accent", bg: "bg-accent/10" },
-        ].map((stat, i) => (
-          <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-            <Card className="glass border-white/10 hover:border-white/30 transition-all hover:shadow-2xl group overflow-hidden rounded-[2rem]">
-              <CardContent className="p-8">
-                <div className={cn("flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg mb-6 group-hover:scale-110 transition-transform", stat.bg)}>
-                  <stat.icon className={cn("h-7 w-7", stat.color)} />
-                </div>
-                <p className="font-serif text-4xl font-bold text-foreground mb-1">{stat.value}</p>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-40 rounded-[2rem] bg-white/5 animate-pulse" />
+          ))
+        ) : (
+          analytics?.stats.map((stat, i) => {
+            const Icon = iconMap[stat.label] || Heart
+            return (
+              <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
+                <Card className="glass border-white/10 hover:border-white/30 transition-all hover:shadow-2xl group overflow-hidden rounded-[2rem]">
+                  <CardContent className="p-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className={cn("flex h-14 w-14 items-center justify-center rounded-2xl shadow-lg group-hover:scale-110 transition-transform", i % 2 === 0 ? "bg-primary/10" : "bg-accent/10")}>
+                        <Icon className={cn("h-7 w-7", i % 2 === 0 ? "text-primary" : "text-accent")} />
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <div className={cn("flex items-center gap-1 font-bold text-xs", stat.trend === 'up' ? "text-emerald-500" : "text-muted-foreground")}>
+                          {stat.trend === 'up' ? <TrendingUp className="h-3 w-3" /> : stat.trend === 'down' ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                          <span>{stat.change}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="font-serif text-4xl font-bold text-foreground mb-1">{stat.value}</p>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )
+          })
+        )}
       </div>
 
       <div className="grid gap-10 lg:grid-cols-3">
@@ -107,8 +130,4 @@ export function BuyerOverview({ user }: { user: User }) {
       </div>
     </div>
   )
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ")
 }

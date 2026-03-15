@@ -37,7 +37,11 @@ export default function ProfessionalDetailPage() {
   }
 
   // Formatting name for Fallback and URL-like replacement for email
+<<<<<<< HEAD
   const name = professional.name || (professional as any).user?.full_name || "Professional"
+=======
+  const name = professional.name || "Professional"
+>>>>>>> d8991edf2c3eb8cd066b3f70983136f50a2d6ffb
   const initials = name.split(' ').map((n: string) => n[0]).join('')
 
   const portfolio = [
