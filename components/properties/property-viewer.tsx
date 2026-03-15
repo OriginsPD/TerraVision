@@ -11,7 +11,7 @@ import { Box, Image as ImageIcon, Maximize2, Move3D, Play, Loader2, ZoomIn, Mous
 import type { Property } from "@/lib/data"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
-import nipplejs from "nipplejs"
+// Removed top-level nipplejs import to fix SSR "window is not defined" error
 import { useGenerateModel } from "@/hooks/api/use-properties"
 import { toast } from "sonner"
 
@@ -178,21 +178,29 @@ export function PropertyViewer({ property }: PropertyViewerProps) {
   const joystickRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    let manager: any;
     if (isWalkthrough && joystickRef.current) {
-      const manager = nipplejs.create({
-        zone: joystickRef.current,
-        mode: 'static',
-        position: { left: '80px', bottom: '80px' },
-        color: 'white',
-        size: 100
+      // Dynamically import nipplejs to avoid SSR "window is not defined" error
+      import('nipplejs').then((nipplejsModule) => {
+        const nipplejs = nipplejsModule.default || nipplejsModule;
+        manager = nipplejs.create({
+          zone: joystickRef.current!,
+          mode: 'static',
+          position: { left: '80px', bottom: '80px' },
+          color: 'white',
+          size: 100
+        })
+        manager.on('move', (evt: any, data: any) => {
+          const x = data.vector.x
+          const y = -data.vector.y
+          setJoystickData({ x, y })
+        })
+        manager.on('end', () => setJoystickData(null))
       })
-      manager.on('move', (evt, data) => {
-        const x = data.vector.x
-        const y = -data.vector.y
-        setJoystickData({ x, y })
-      })
-      manager.on('end', () => setJoystickData(null))
-      return () => manager.destroy()
+      
+      return () => {
+        if (manager) manager.destroy()
+      }
     }
   }, [isWalkthrough])
 

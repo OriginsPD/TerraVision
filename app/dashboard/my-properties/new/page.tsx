@@ -67,14 +67,21 @@ export default function NewPropertyPage() {
 
     createProperty(data, {
       onSuccess: (result: any) => {
-        toast.success("Listing published! AI model generation is now in queue.")
-        router.push(`/properties/${result.id || result.id}`)
+        // Correctly handle the BaseResponse structure: result.data contains the property object
+        const propertyId = result?.data?.id || result?.id;
+        if (propertyId) {
+          toast.success("Listing published! AI model generation is now in queue.")
+          router.push(`/properties/${propertyId}`)
+        } else {
+          toast.error("Property created, but ID was missing. Redirecting to dashboard.")
+          router.push("/dashboard/my-properties")
+        }
       },
       onError: (err: any) => {
         // If mock mode is on, we might still want to simulate success for the UI flow
         if (process.env.NEXT_PUBLIC_MOCK_MODE === 'true') {
            toast.success("Development Mode: Listing created successfully!")
-           router.push("/dashboard")
+           router.push("/dashboard/my-properties")
            return
         }
         toast.error(err.message || "Failed to create listing")

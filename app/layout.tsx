@@ -45,6 +45,8 @@ export const viewport: Viewport = {
   initialScale: 1,
 }
 
+import { Toaster } from "@/components/ui/sonner"
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -61,11 +63,12 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <Toaster position="top-right" closeButton richColors />
           </ThemeProvider>
-          </QueryProvider>
-          {/* <Analytics /> */}
-          </body>
-          </html>
-          )
-          }
+        </QueryProvider>
+        {/* <Analytics /> */}
+      </body>
+    </html>
+  )
+}
 
