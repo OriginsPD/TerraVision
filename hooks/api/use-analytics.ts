@@ -18,7 +18,7 @@ export function useAnalytics() {
   return useQuery<AnalyticsData>({
     queryKey: ["analytics", "overview"],
     queryFn: async () => {
-      return apiClient.get("/analytics/overview")
+      return apiClient.get("/analytics/overview") as Promise<AnalyticsData>
     },
   })
 }
