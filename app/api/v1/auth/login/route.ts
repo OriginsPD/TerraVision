@@ -38,7 +38,8 @@ export async function POST(req: NextRequest) {
 
     // Find credential account with password
     const credentialAccount = user.accounts.find(
-      (a) => a.provider_id === "credential" && a.password
+      (a: { provider_id: string; password?: string | null }) => 
+        a.provider_id === "credential" && a.password
     )
     if (!credentialAccount?.password) {
       return errorResponse("Invalid email or password", 401)
