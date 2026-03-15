@@ -64,9 +64,9 @@ export default function PricingPage() {
           </div>
 
           <div className="grid gap-8 lg:grid-cols-3">
-            {plans.map((plan, i) => (
+            {plans.map((plan) => (
               <div 
-                key={i} 
+                key={plan.name} 
                 className={`flex flex-col p-8 rounded-3xl border ${
                   plan.popular ? "border-primary bg-primary/5 shadow-2xl shadow-primary/10" : "border-border bg-card"
                 }`}

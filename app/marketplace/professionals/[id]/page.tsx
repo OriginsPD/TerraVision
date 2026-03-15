@@ -149,7 +149,7 @@ export default function ProfessionalDetailPage() {
                 <div className="relative z-10 space-y-6">
                   <div className="space-y-1">
                     <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Rate starting at</span>
-                    <p className="font-serif text-5xl font-bold text-primary">${professional.hourlyRate || professional.hourly_rate}/hr</p>
+                    <p className="font-serif text-5xl font-bold text-primary">${professional.hourlyRate}/hr</p>
                   </div>
                   <Button onClick={() => setIsCheckoutOpen(true)} size="lg" variant="glossy" className="w-full py-8 text-xl font-bold rounded-2xl shadow-xl shadow-primary/30 group">
                     <Calendar className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
@@ -374,7 +374,7 @@ export default function ProfessionalDetailPage() {
         data={{
           id: professional.id.toString(),
           title: name,
-          price: professional.hourlyRate || professional.hourly_rate,
+          price: professional.hourlyRate,
           subtitle: professional.profession
         }}
       />

@@ -27,7 +27,7 @@ export interface Professional {
   id: string
   name: string
   email: string
-  profession: "architect" | "mason" | "carpenter" | "contractor" | "designer"
+  profession: "architect" | "mason" | "carpenter" | "contractor" | "designer" | "electrician" | "plumber" | "interior_designer"
   specialty: string
   bio: string
   rating: number
