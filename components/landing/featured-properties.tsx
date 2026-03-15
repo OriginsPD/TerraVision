@@ -12,7 +12,7 @@ import { FavoriteButton } from "@/components/ui/favorite-button"
 function PropertyCard({ property, index }: { property: Property, index: number }) {
   const imageUrl = property.images[0]?.startsWith('http') || property.images[0]?.startsWith('/')
     ? property.images[0] 
-    : `http://localhost:8000${property.images[0]}`;
+    : property.images[0]; // Fallback to raw path if it doesn't start with / or http
 
   return (
     <motion.div 

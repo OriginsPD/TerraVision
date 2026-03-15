@@ -49,7 +49,7 @@ export function SimilarProperties({ properties }: SimilarPropertiesProps) {
                   <div className="relative aspect-[4/3] overflow-hidden">
                     {property.images[0] ? (
                       <img 
-                        src={property.images[0].startsWith('http') || property.images[0].startsWith('/') ? property.images[0] : `http://localhost:8000${property.images[0]}`}
+                        src={property.images[0].startsWith('http') || property.images[0].startsWith('/') ? property.images[0] : property.images[0]}
                         alt={property.title}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />

@@ -206,7 +206,7 @@ export function PropertyViewer({ property }: PropertyViewerProps) {
 
   const modelUrl = property.model3DUrl?.startsWith('http') || property.model3DUrl?.startsWith('/')
     ? property.model3DUrl 
-    : `http://localhost:8000${property.model3DUrl}`;
+    : property.model3DUrl;
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -339,17 +339,17 @@ export function PropertyViewer({ property }: PropertyViewerProps) {
           <div className="h-full w-full bg-muted relative group">
              <div className="grid h-full grid-cols-4 grid-rows-2 gap-3 p-4">
                 <div className="col-span-3 row-span-2 overflow-hidden rounded-[2rem] relative group/main">
-                  <img src={property.images[0]?.startsWith('http') || property.images[0]?.startsWith('/') ? property.images[0] : `http://localhost:8000${property.images[0]}`} className="h-full w-full object-cover transition-transform duration-700 group-hover/main:scale-105" alt={property.title} />
+                  <img src={property.images[0]?.startsWith('http') || property.images[0]?.startsWith('/') ? property.images[0] : property.images[0]} className="h-full w-full object-cover transition-transform duration-700 group-hover/main:scale-105" alt={property.title} />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                 </div>
                 {property.images.slice(1, 3).map((img, i) => (
                   <div key={i} className="overflow-hidden rounded-[1.5rem] relative group/sub">
-                    <img src={img.startsWith('http') || img.startsWith('/') ? img : `http://localhost:8000${img}`} className="h-full w-full object-cover transition-transform duration-700 group-hover/sub:scale-110" alt={`${property.title} ${i + 2}`} />
+                    <img src={img.startsWith('http') || img.startsWith('/') ? img : img} className="h-full w-full object-cover transition-transform duration-700 group-hover/sub:scale-110" alt={`${property.title} ${i + 2}`} />
                   </div>
                 ))}
                 {property.images.length > 3 ? (
                   <div className="relative overflow-hidden rounded-[1.5rem] bg-card/50 backdrop-blur-md border border-white/20 flex flex-col items-center justify-center group/more cursor-pointer">
-                    <img src={property.images[3].startsWith('http') || property.images[3].startsWith('/') ? property.images[3] : `http://localhost:8000${property.images[3]}`} className="absolute inset-0 h-full w-full object-cover opacity-20 blur-sm group-hover/more:scale-110 transition-transform duration-700" alt="More photos" />
+                    <img src={property.images[3].startsWith('http') || property.images[3].startsWith('/') ? property.images[3] : property.images[3]} className="absolute inset-0 h-full w-full object-cover opacity-20 blur-sm group-hover/more:scale-110 transition-transform duration-700" alt="More photos" />
                     <span className="relative z-10 text-2xl font-bold text-white">+{property.images.length - 3}</span>
                     <span className="relative z-10 text-xs font-bold text-white/60 uppercase tracking-widest mt-1">More Photos</span>
                   </div>
@@ -370,7 +370,7 @@ export function PropertyViewer({ property }: PropertyViewerProps) {
           </button>
           {property.images.map((img, i) => (
             <button key={i} onClick={() => setActiveTab("photos")} className={cn("group relative h-20 w-28 shrink-0 overflow-hidden rounded-2xl border transition-all duration-300", activeTab === "photos" ? "border-primary ring-4 ring-primary/20 shadow-lg" : "border-white/10 hover:border-white/30")}>
-              <img src={img.startsWith('http') || img.startsWith('/') ? img : `http://localhost:8000${img}`} className={cn("h-full w-full object-cover transition-opacity duration-300", activeTab === "photos" ? "opacity-100" : "opacity-40 group-hover:opacity-100")} alt={`Thumbnail ${i + 1}`} />
+              <img src={img.startsWith('http') || img.startsWith('/') ? img : img} className={cn("h-full w-full object-cover transition-opacity duration-300", activeTab === "photos" ? "opacity-100" : "opacity-40 group-hover:opacity-100")} alt={`Thumbnail ${i + 1}`} />
               {activeTab === "photos" && i === 0 && <motion.div layoutId="tab-active" className="absolute bottom-0 left-0 right-0 h-1 bg-primary" />}
             </button>
           ))}

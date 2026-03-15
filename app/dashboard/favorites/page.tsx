@@ -72,7 +72,7 @@ export default function FavoritesPage() {
               {savedProperties.map((property: any, index: number) => {
                 const imageUrl = property.image_url?.startsWith('http') || property.image_url?.startsWith('/')
                   ? property.image_url 
-                  : `http://localhost:8000${property.image_url}`;
+                  : property.image_url;
 
                 return (
                   <motion.div

@@ -79,7 +79,7 @@ export default function MyPropertiesPage() {
                 >
                   <div className="flex gap-4">
                     <img 
-                      src={property.image_url.startsWith('http') ? property.image_url : `http://localhost:8000${property.image_url}`} 
+                      src={property.image_url.startsWith('http') || property.image_url.startsWith('/') ? property.image_url : property.image_url} 
                       className="h-20 w-20 flex-shrink-0 rounded-lg object-cover" 
                       alt={property.title}
                     />

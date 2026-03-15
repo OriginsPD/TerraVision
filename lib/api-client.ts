@@ -10,8 +10,11 @@
 
 import { getAccessToken, refreshAccessToken, clearTokens } from "./auth"
 
+const envApiUrl = process.env.NEXT_PUBLIC_API_URL
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "/api/v1"
+  envApiUrl && (typeof window === "undefined" || !envApiUrl.includes("localhost") || process.env.NODE_ENV === "development")
+    ? envApiUrl
+    : "/api/v1"
 
 type RequestOptions = {
   headers?: Record<string, string>

@@ -27,7 +27,7 @@ function PropertyCard({ property, index, view }: { property: Property, index: nu
 
   const imageUrl = property.images[0]?.startsWith('http') || property.images[0]?.startsWith('/')
     ? property.images[0] 
-    : `http://localhost:8000${property.images[0]}`;
+    : property.images[0];
 
   if (view === "list") {
     return (
